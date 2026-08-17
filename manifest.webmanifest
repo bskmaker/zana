@@ -1,0 +1,17 @@
+{
+  "name": "Zana · Nutrición con IA",
+  "short_name": "Zana",
+  "description": "Tu nutrición inteligente: planes personalizados, recetas, lista de la compra, gastos y gimnasio.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF8F0",
+  "theme_color": "#F26419",
+  "lang": "es",
+  "categories": ["health", "lifestyle", "food"],
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

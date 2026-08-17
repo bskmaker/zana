@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#F26419" />
+  <meta name="description" content="Zana — Tu nutrición inteligente con IA. Planes de comida personalizados, recetas, lista de la compra, gastos y gimnasio." />
+  <title>Zana · Nutrición con IA</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <link rel="stylesheet" href="css/app.css?v=19" />
+</head>
+<body>
+  <!-- Splash / carga -->
+  <div id="splash" class="splash">
+    <div class="splash-mascot" id="splashMascot"></div>
+    <div class="splash-title">Zana</div>
+    <div class="splash-sub">tu nutrición, hecha fácil</div>
+  </div>
+
+  <!-- Contenedor principal donde el router pinta las pantallas -->
+  <main id="app" class="app-root" aria-live="polite"></main>
+
+  <!-- Barra de progreso diario (siempre visible) -->
+  <div id="dailyBar" class="daily-bar hidden"></div>
+
+  <!-- Barra de navegación inferior -->
+  <nav id="navbar" class="navbar hidden"></nav>
+
+  <!-- Botón flotante de la zanahoria (IA) -->
+  <button id="mascotFab" class="mascot-fab hidden" aria-label="Hablar con Zana"></button>
+
+  <!-- Hoja de la IA (chat con la zanahoria) -->
+  <div id="mascotSheet" class="sheet hidden" role="dialog" aria-modal="true"></div>
+
+  <!-- Contenedor de notificaciones toast -->
+  <div id="toasts" class="toasts"></div>
+
+  <script src="js/data.js?v=19"></script>
+  <script src="js/photos.js?v=19"></script>
+  <script src="js/knowledge.js?v=19"></script>
+  <script src="js/i18n.js?v=19"></script>
+  <script src="js/engine.js?v=19"></script>
+  <script src="js/store.js?v=19"></script>
+  <script src="js/mascot.js?v=19"></script>
+  <script src="js/ui.js?v=19"></script>
+  <script src="js/app.js?v=19"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

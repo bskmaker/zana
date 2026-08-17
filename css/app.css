@@ -1,0 +1,574 @@
+/* =========================================================
+   ZANA · Sistema de diseño
+   ========================================================= */
+:root {
+  /* Marca */
+  --carrot: #F26419;
+  --carrot-soft: #FF7A1A;
+  --carrot-tint: #FFE7D3;
+  --leaf: #2FBF71;
+  --leaf-deep: #1B998B;
+  --leaf-tint: #DFF5E8;
+  --sun: #FFC24B;
+  --berry: #FF5A6E;
+  --grape: #7C5CFC;
+
+  /* Neutros */
+  --bg: #FFF8F0;
+  --surface: #FFFFFF;
+  --surface-2: #FFF3E7;
+  --ink: #2B2118;
+  --ink-2: #6B5E52;
+  --ink-3: #A89B8D;
+  --line: #F0E4D6;
+
+  /* Sistema */
+  --radius: 22px;
+  --radius-sm: 14px;
+  --radius-lg: 30px;
+  --shadow: 0 10px 30px rgba(226, 100, 25, 0.10);
+  --shadow-sm: 0 4px 14px rgba(43, 33, 24, 0.06);
+  --shadow-lg: 0 20px 50px rgba(226, 100, 25, 0.18);
+  --nav-h: 74px;
+  --bar-h: 54px;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --font: "Nunito", "Segoe UI", system-ui, -apple-system, "Roboto", "Helvetica Neue", sans-serif;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, select, textarea { font-family: inherit; }
+img { max-width: 100%; display: block; }
+.hidden { display: none !important; }
+
+/* Scroll suave y barras finas */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--carrot-tint); border-radius: 8px; }
+
+/* =========================================================
+   Layout raíz
+   ========================================================= */
+.app-root {
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100%;
+  padding: 0 18px calc(var(--nav-h) + var(--bar-h) + 20px);
+  padding-top: max(16px, env(safe-area-inset-top));
+  position: relative;
+}
+
+/* =========================================================
+   Splash
+   ========================================================= */
+.splash {
+  position: fixed; inset: 0; z-index: 999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(120% 80% at 50% 20%, #FFD9B0 0%, var(--bg) 60%);
+  gap: 6px; transition: opacity .5s var(--ease);
+}
+.splash.out { opacity: 0; pointer-events: none; }
+.splash-mascot { width: 140px; height: 140px; animation: bob 2.4s var(--ease) infinite; }
+.splash-title { font-size: 40px; font-weight: 900; letter-spacing: -1px; color: var(--carrot); }
+.splash-sub { color: var(--ink-2); font-weight: 700; }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-2deg);} 50% { transform: translateY(-12px) rotate(2deg);} }
+
+/* =========================================================
+   Tipografía / cabeceras
+   ========================================================= */
+.h-top { display: flex; align-items: center; gap: 12px; padding: 8px 0 14px; }
+.h-top .back {
+  width: 42px; height: 42px; border-radius: 14px; background: var(--surface);
+  box-shadow: var(--shadow-sm); display: grid; place-items: center; font-size: 20px; flex: 0 0 auto;
+}
+.h-title { font-size: 24px; font-weight: 900; letter-spacing: -.5px; }
+.h-sub { color: var(--ink-2); font-weight: 700; font-size: 14px; }
+.eyebrow { text-transform: uppercase; letter-spacing: 1.4px; font-size: 11px; font-weight: 800; color: var(--carrot); }
+h2.section { font-size: 18px; font-weight: 900; margin: 22px 0 12px; letter-spacing: -.3px; }
+.muted { color: var(--ink-2); }
+
+/* =========================================================
+   Tarjetas
+   ========================================================= */
+.card {
+  background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  padding: 18px; border: 1px solid var(--line);
+}
+.card.pad-lg { padding: 22px; }
+.card.flat { box-shadow: none; }
+
+/* =========================================================
+   Botones
+   ========================================================= */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 15px 20px; border-radius: 16px; font-weight: 800; font-size: 16px;
+  background: var(--surface-2); color: var(--ink); transition: transform .15s var(--ease), box-shadow .2s;
+  width: 100%;
+}
+.btn:active { transform: scale(.97); }
+.btn.primary { background: linear-gradient(135deg, var(--carrot-soft), var(--carrot)); color: #fff; box-shadow: 0 10px 24px rgba(242,100,25,.35); }
+.btn.leaf { background: linear-gradient(135deg, var(--leaf), var(--leaf-deep)); color: #fff; box-shadow: 0 10px 24px rgba(47,191,113,.30); }
+.btn.ghost { background: transparent; border: 2px solid var(--line); }
+.btn.sm { padding: 10px 14px; font-size: 14px; border-radius: 12px; width: auto; }
+.btn:disabled { opacity: .5; }
+
+/* =========================================================
+   Menú de planes / secciones (botones grandes con icono)
+   ========================================================= */
+.tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.tile {
+  position: relative; text-align: left; border-radius: var(--radius);
+  padding: 18px; background: var(--surface); box-shadow: var(--shadow-sm);
+  border: 1px solid var(--line); overflow: hidden; transition: transform .15s var(--ease);
+  min-height: 128px; display: flex; flex-direction: column; justify-content: space-between;
+}
+.tile:active { transform: scale(.97); }
+.tile .tile-ico { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; }
+.tile .tile-name { font-weight: 900; font-size: 16px; letter-spacing: -.2px; margin-top: 8px; }
+.tile .tile-meta { font-size: 12px; color: var(--ink-2); font-weight: 700; }
+.tile .tile-blob { position: absolute; right: -20px; bottom: -20px; width: 90px; height: 90px; border-radius: 50%; opacity: .10; }
+
+/* Colores de icono utilitarios */
+.ic-carrot { background: var(--carrot-tint); color: var(--carrot); }
+.ic-leaf { background: var(--leaf-tint); color: var(--leaf-deep); }
+.ic-sun { background: #FFF0CE; color: #C98A00; }
+.ic-berry { background: #FFE0E4; color: var(--berry); }
+.ic-grape { background: #ECE6FF; color: var(--grape); }
+.bg-carrot { background: var(--carrot); } .bg-leaf { background: var(--leaf); }
+.bg-sun { background: var(--sun); } .bg-berry { background: var(--berry); } .bg-grape { background: var(--grape); }
+
+/* =========================================================
+   Planes (tarjeta grande)
+   ========================================================= */
+.plan-card {
+  display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--shadow-sm); border: 1px solid var(--line);
+  transition: transform .15s var(--ease); text-align: left; width: 100%; margin-bottom: 12px;
+}
+.plan-card:active { transform: scale(.98); }
+.plan-emoji { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; font-size: 30px; flex: 0 0 auto; }
+.plan-info { flex: 1; min-width: 0; }
+.plan-name { font-weight: 900; font-size: 17px; letter-spacing: -.3px; }
+.plan-tag { font-size: 12.5px; color: var(--ink-2); font-weight: 700; margin-top: 2px; }
+.plan-kcal { font-size: 12px; font-weight: 800; color: var(--carrot); }
+.plan-chev { color: var(--ink-3); font-size: 20px; }
+.plan-card.active-ring { border-color: var(--carrot); box-shadow: 0 8px 22px rgba(242,100,25,.18); }
+
+/* =========================================================
+   Chips / píldoras
+   ========================================================= */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 9px 14px; border-radius: 999px; background: var(--surface-2); font-weight: 800; font-size: 13px;
+  border: 2px solid transparent; transition: .15s; color: var(--ink);
+}
+.chip.on { background: var(--carrot); color: #fff; border-color: var(--carrot); }
+.chip.leaf.on { background: var(--leaf); border-color: var(--leaf); }
+
+/* =========================================================
+   Formularios
+   ========================================================= */
+.field { margin-bottom: 16px; }
+.field > label { display: block; font-weight: 800; font-size: 14px; margin-bottom: 8px; }
+.field .hint { font-size: 12px; color: var(--ink-2); font-weight: 600; margin-top: 6px; }
+.input, textarea.input, select.input {
+  width: 100%; padding: 14px 16px; border-radius: 14px; border: 2px solid var(--line);
+  background: var(--surface); font-size: 16px; font-weight: 700; color: var(--ink); transition: border .15s;
+}
+.input:focus { outline: none; border-color: var(--carrot); }
+textarea.input { resize: vertical; min-height: 90px; line-height: 1.5; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stepper { display: flex; align-items: center; gap: 12px; }
+.stepper button { width: 46px; height: 46px; border-radius: 14px; background: var(--surface-2); font-size: 22px; font-weight: 900; display: grid; place-items: center; }
+.stepper .val { flex: 1; text-align: center; font-size: 22px; font-weight: 900; }
+
+/* Progreso de onboarding */
+.steps-dots { display: flex; gap: 6px; justify-content: center; margin: 6px 0 18px; }
+.steps-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); transition: .2s; }
+.steps-dots i.on { background: var(--carrot); width: 22px; border-radius: 6px; }
+
+/* =========================================================
+   Barra de progreso diario (nutrición + hidratación)
+   ========================================================= */
+.daily-bar {
+  position: fixed; left: 0; right: 0; bottom: var(--nav-h); z-index: 40;
+  max-width: 560px; margin: 0 auto; padding: 8px 16px calc(8px);
+  background: rgba(255,248,240,.92); backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: center;
+}
+.macro-mini { flex: 1; }
+.macro-mini .lbl { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 800; margin-bottom: 4px; color: var(--ink-2); }
+.macro-mini .lbl b { color: var(--ink); }
+.bar { height: 8px; border-radius: 6px; background: var(--line); overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: 6px; transition: width .5s var(--ease); }
+
+/* =========================================================
+   Navbar inferior
+   ========================================================= */
+.navbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; height: var(--nav-h);
+  max-width: 560px; margin: 0 auto; background: var(--surface);
+  border-top: 1px solid var(--line); box-shadow: 0 -6px 24px rgba(43,33,24,.05);
+  display: flex; align-items: stretch; padding-bottom: env(safe-area-inset-bottom);
+}
+.navbar button { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--ink-3); font-size: 10.5px; font-weight: 800; }
+.navbar button .ni { font-size: 22px; line-height: 1; transition: transform .2s var(--ease); }
+.navbar button.on { color: var(--carrot); }
+.navbar button.on .ni { transform: translateY(-2px) scale(1.12); }
+
+/* =========================================================
+   FAB zanahoria (IA)
+   ========================================================= */
+.mascot-fab {
+  position: fixed; right: 12px; top: calc(env(safe-area-inset-top) + 10px); z-index: 60;
+  width: 60px; height: 60px; border-radius: 50%;
+  background: linear-gradient(135deg, #8FD3FF, #4FA9F5);
+  box-shadow: var(--shadow-lg); display: grid; place-items: center; padding: 9px;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.mascot-fab svg { width: 100%; height: 100%; }
+.mascot-fab::after {
+  content: ""; position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--leaf); border: 2px solid #fff;
+}
+
+/* =========================================================
+   Sheet (chat IA / modales)
+   ========================================================= */
+.sheet {
+  position: fixed; inset: 0; z-index: 80; display: flex; align-items: flex-end;
+  background: rgba(43,33,24,.35); animation: fade .2s var(--ease);
+}
+@keyframes fade { from { opacity: 0; } }
+.sheet-panel {
+  background: var(--surface); width: 100%; max-width: 560px; margin: 0 auto;
+  border-radius: 26px 26px 0 0; max-height: 88vh; display: flex; flex-direction: column;
+  animation: up .32s var(--ease); box-shadow: var(--shadow-lg);
+}
+@keyframes up { from { transform: translateY(100%); } }
+.sheet-grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line); margin: 10px auto 4px; }
+.sheet-head { display: flex; align-items: center; gap: 12px; padding: 8px 18px 12px; border-bottom: 1px solid var(--line); }
+.sheet-head .m { width: 44px; height: 44px; }
+.sheet-body { padding: 16px 18px; overflow-y: auto; }
+
+/* Chat */
+.chat-scroll { flex: 1; overflow-y: auto; padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 12px; }
+.msg { max-width: 82%; padding: 12px 15px; border-radius: 18px; font-weight: 600; font-size: 15px; line-height: 1.45; white-space: pre-wrap; }
+.msg.bot { background: var(--surface-2); border-bottom-left-radius: 6px; align-self: flex-start; }
+.msg.me { background: linear-gradient(135deg, var(--carrot-soft), var(--carrot)); color: #fff; border-bottom-right-radius: 6px; align-self: flex-end; }
+.msg .typing { display: inline-flex; gap: 4px; }
+.msg .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); animation: blink 1.2s infinite; }
+.msg .typing i:nth-child(2){ animation-delay:.2s;} .msg .typing i:nth-child(3){ animation-delay:.4s;}
+@keyframes blink { 0%,60%,100%{opacity:.3;} 30%{opacity:1;} }
+.chat-input { display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+.chat-input input { flex: 1; padding: 13px 16px; border-radius: 16px; border: 2px solid var(--line); font-size: 16px; }
+.chat-input input:focus { outline: none; border-color: var(--carrot); }
+.chat-input button { width: 48px; height: 48px; border-radius: 16px; background: var(--carrot); color: #fff; font-size: 20px; display: grid; place-items: center; flex: 0 0 auto; }
+.chat-suggest { display: flex; gap: 8px; overflow-x: auto; padding: 0 12px 10px; }
+.chat-suggest button { white-space: nowrap; padding: 8px 13px; border-radius: 999px; background: var(--surface-2); font-weight: 800; font-size: 13px; border: 1px solid var(--line); }
+
+/* =========================================================
+   Calendario
+   ========================================================= */
+.cal-switch { display: flex; background: var(--surface-2); border-radius: 14px; padding: 4px; margin-bottom: 14px; }
+.cal-switch button { flex: 1; padding: 10px; border-radius: 11px; font-weight: 800; font-size: 14px; color: var(--ink-2); }
+.cal-switch button.on { background: var(--surface); color: var(--carrot); box-shadow: var(--shadow-sm); }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-nav b { font-weight: 900; font-size: 16px; text-transform: capitalize; }
+.cal-nav button { width: 40px; height: 40px; border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-sm); font-size: 18px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
+.cal-grid .dow { text-align: center; font-size: 11px; font-weight: 800; color: var(--ink-3); padding: 4px 0; }
+.cal-cell { aspect-ratio: 1; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; position: relative; }
+.cal-cell.out { opacity: .3; }
+.cal-cell.today { border-color: var(--carrot); color: var(--carrot); }
+.cal-cell.sel { background: var(--carrot); color: #fff; border-color: var(--carrot); }
+.cal-cell .dot { position: absolute; bottom: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--leaf); }
+.cal-cell.sel .dot { background: #fff; }
+
+/* Fila de comida (agenda del día) */
+.meal-row { display: flex; gap: 12px; padding: 14px; border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 10px; align-items: center; }
+.meal-time { text-align: center; flex: 0 0 auto; width: 52px; }
+.meal-time b { font-size: 15px; font-weight: 900; display: block; }
+.meal-time span { font-size: 10px; color: var(--ink-3); font-weight: 800; }
+.meal-main { flex: 1; min-width: 0; }
+.meal-slot { font-size: 11px; font-weight: 800; color: var(--carrot); text-transform: uppercase; letter-spacing: .5px; }
+.meal-dish { font-weight: 800; font-size: 15px; margin-top: 1px; }
+.meal-kcal { font-size: 12px; color: var(--ink-2); font-weight: 700; }
+.check {
+  width: 36px; height: 36px; border-radius: 12px; border: 2px solid var(--line); flex: 0 0 auto;
+  display: grid; place-items: center; font-size: 18px; color: transparent; transition: .15s; background: var(--surface);
+}
+.check.done { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+
+/* =========================================================
+   Recetas
+   ========================================================= */
+.now-hero { border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 8px; position: relative; }
+.now-hero .now-img { height: 190px; background-size: cover; background-position: center; position: relative; }
+.now-hero .now-badge { position: absolute; top: 14px; left: 14px; background: rgba(255,248,240,.92); padding: 7px 13px; border-radius: 999px; font-weight: 900; font-size: 12px; color: var(--carrot); backdrop-filter: blur(6px); }
+.now-hero .now-body { padding: 16px; }
+.now-hero .now-title { font-size: 22px; font-weight: 900; letter-spacing: -.4px; }
+.now-hero .now-meta { display: flex; gap: 14px; margin-top: 8px; color: var(--ink-2); font-weight: 800; font-size: 13px; }
+
+.recipe-card { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 10px; text-align: left; width: 100%; }
+.recipe-thumb { width: 74px; height: 74px; border-radius: 16px; background-size: cover; background-position: center; flex: 0 0 auto; }
+.recipe-card .rc-title { font-weight: 900; font-size: 15px; }
+.recipe-card .rc-meta { font-size: 12px; color: var(--ink-2); font-weight: 700; margin-top: 3px; }
+.tag { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; margin-right: 5px; }
+.tag.easy { background: var(--leaf-tint); color: var(--leaf-deep); }
+.tag.fast { background: #FFF0CE; color: #C98A00; }
+
+/* Detalle receta */
+.detail-hero { height: 240px; background-size: cover; background-position: center; border-radius: 0 0 var(--radius-lg) var(--radius-lg); margin: 0 -18px 16px; position: relative; }
+.detail-hero .db { position: absolute; left: 16px; top: 16px; }
+.ing-item { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--line); font-weight: 700; }
+.ing-item .g { color: var(--carrot); font-weight: 900; }
+.step-item { display: flex; gap: 14px; margin-bottom: 16px; }
+.step-item .n { width: 30px; height: 30px; border-radius: 10px; background: var(--carrot); color: #fff; font-weight: 900; display: grid; place-items: center; flex: 0 0 auto; }
+.step-item p { margin: 3px 0 0; font-weight: 600; line-height: 1.5; }
+
+/* Preparados / batch cooking */
+.prep-card { border-left: 4px solid var(--leaf); }
+
+/* =========================================================
+   Súper / lista de la compra
+   ========================================================= */
+.super-head { background: linear-gradient(135deg, var(--leaf), var(--leaf-deep)); color: #fff; border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.super-head .big { font-size: 30px; font-weight: 900; }
+.super-progress { height: 10px; border-radius: 6px; background: rgba(255,255,255,.3); overflow: hidden; margin-top: 12px; }
+.super-progress > span { display: block; height: 100%; background: #fff; border-radius: 6px; transition: width .4s; }
+.aisle-title { display: flex; align-items: center; gap: 8px; font-weight: 900; margin: 18px 0 8px; font-size: 15px; }
+.shop-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 8px; }
+.shop-item.got { opacity: .55; }
+.shop-item.got .si-name { text-decoration: line-through; }
+.si-body { flex: 1; min-width: 0; }
+.si-name { font-weight: 800; font-size: 15px; }
+.si-meta { font-size: 12px; color: var(--ink-2); font-weight: 700; }
+.si-brand { font-size: 11px; color: var(--leaf-deep); font-weight: 800; margin-top: 2px; }
+.si-qty { font-weight: 900; color: var(--carrot); font-size: 14px; white-space: nowrap; }
+
+/* Despensa */
+.pantry-pill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--leaf-tint); color: var(--leaf-deep); font-weight: 800; font-size: 13px; margin: 0 6px 8px 0; }
+
+/* =========================================================
+   Gastos
+   ========================================================= */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.stat { background: var(--surface); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); }
+.stat .k { font-size: 12px; color: var(--ink-2); font-weight: 800; }
+.stat .v { font-size: 26px; font-weight: 900; letter-spacing: -.5px; margin-top: 4px; }
+.stat .v small { font-size: 15px; font-weight: 800; }
+.bars-week { display: flex; align-items: flex-end; gap: 8px; height: 130px; padding: 10px 4px 0; }
+.bars-week .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.bars-week .col .b { width: 100%; border-radius: 8px 8px 4px 4px; background: linear-gradient(to top, var(--carrot), var(--carrot-soft)); transition: height .5s var(--ease); min-height: 4px; }
+.bars-week .col .b.future { background: var(--line); }
+.bars-week .col small { font-size: 10px; font-weight: 800; color: var(--ink-3); }
+
+/* =========================================================
+   Gimnasio
+   ========================================================= */
+.gym-day { border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-sm); border: 1px solid var(--line); padding: 16px; margin-bottom: 12px; }
+.gym-day .gd-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.gym-day .gd-badge { padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 900; }
+.gym-day .gd-title { font-weight: 900; font-size: 16px; }
+.ex-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ex-item:last-child { border-bottom: none; }
+.ex-ico { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; font-size: 20px; flex: 0 0 auto; }
+.ex-item .ex-name { font-weight: 800; font-size: 15px; }
+.ex-item .ex-detail { font-size: 12.5px; color: var(--ink-2); font-weight: 700; }
+.ex-sets { font-weight: 900; color: var(--grape); font-size: 13px; white-space: nowrap; }
+
+/* =========================================================
+   Toasts
+   ========================================================= */
+.toasts { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + var(--bar-h) + 16px); z-index: 90; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+.toast { background: #241C15; color: #fff; padding: 13px 18px; border-radius: 14px; font-weight: 800; font-size: 14px; box-shadow: 0 12px 30px rgba(0,0,0,.4); animation: toastin .3s var(--ease); display: flex; align-items: center; gap: 8px; max-width: 90%; border: 1px solid rgba(255,255,255,.12); }
+@keyframes toastin { from { transform: translateY(20px); opacity: 0; } }
+
+/* =========================================================
+   Utilidades varias
+   ========================================================= */
+.center { text-align: center; }
+.mt { margin-top: 14px; } .mt-lg { margin-top: 24px; }
+.empty { text-align: center; padding: 40px 20px; color: var(--ink-2); }
+.empty .em { width: 90px; height: 90px; margin: 0 auto 14px; opacity: .9; }
+.flex { display: flex; align-items: center; gap: 10px; }
+.between { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.grow { flex: 1; min-width: 0; }
+.pill-note { background: var(--carrot-tint); color: #A6480F; border-radius: 14px; padding: 12px 14px; font-weight: 700; font-size: 13.5px; line-height: 1.45; }
+.divider { height: 1px; background: var(--line); margin: 16px 0; }
+
+/* Animación de entrada de pantallas */
+.screen-in { animation: screenin .3s var(--ease); }
+@keyframes screenin { from { opacity: 0; transform: translateY(8px); } }
+
+/* =========================================================
+   Tema oscuro (no negro del todo) — activable en Ajustes › Estilo
+   ========================================================= */
+:root[data-theme="dark"] {
+  --bg: #38343A;
+  --surface: #443F47;
+  --surface-2: #4F4952;
+  --ink: #F7F1EA;
+  --ink-2: #CFC5D0;
+  --ink-3: #9E94A2;
+  --line: #574F5C;
+  --carrot-tint: #5E4230;
+  --leaf-tint: #2F4A3B;
+  --shadow: 0 10px 30px rgba(0,0,0,.28);
+  --shadow-sm: 0 4px 14px rgba(0,0,0,.20);
+  --shadow-lg: 0 20px 50px rgba(0,0,0,.38);
+}
+/* Tema Orange (Zana) — naranja vivo, todo legible */
+:root[data-theme="orange"] {
+  --bg: #FF7A1A;
+  --surface: #FFF6EE;
+  --surface-2: #FFE8D3;
+  --ink: #3A2008;
+  --ink-2: #7A4A1E;
+  --ink-3: #A9713C;
+  --line: #FFD3AC;
+  --carrot: #D64500;
+  --carrot-soft: #F26419;
+  --carrot-tint: #FFDCC0;
+  --leaf: #2FA35F;
+  --leaf-deep: #1B7A4E;
+  --leaf-tint: #E2F3E6;
+  --shadow: 0 10px 30px rgba(120,50,0,.22);
+  --shadow-sm: 0 4px 14px rgba(120,50,0,.16);
+  --shadow-lg: 0 18px 46px rgba(120,50,0,.30);
+}
+:root[data-theme="orange"] .daily-bar { background: rgba(255,122,26,.94); }
+:root[data-theme="orange"] .navbar { background: var(--surface); }
+:root[data-theme="orange"] .h-title, :root[data-theme="orange"] h2.section { color: var(--ink); }
+
+:root[data-theme="dark"] .daily-bar { background: rgba(56,52,58,.94); }
+:root[data-theme="dark"] .now-hero .now-badge { background: rgba(44,38,33,.9); }
+:root[data-theme="dark"] .cal-switch button.on,
+:root[data-theme="dark"] .stat,
+:root[data-theme="dark"] .card { background: var(--surface); }
+
+/* =========================================================
+   Parpadeo verde "ahora toca" (hora de comer)
+   ========================================================= */
+@keyframes pulseGreen {
+  0%,100% { box-shadow: var(--shadow); }
+  50% { box-shadow: 0 0 0 3px rgba(47,191,113,.55), 0 10px 30px rgba(47,191,113,.35); }
+}
+.now-hero.due { animation: pulseGreen 1.6s ease-in-out infinite; border: 2px solid var(--leaf); }
+@media (prefers-reduced-motion: reduce){ .now-hero.due { animation: none; } }
+
+/* =========================================================
+   Macros compactos junto al título
+   ========================================================= */
+.macro-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.mchip { display: inline-flex; align-items: center; gap: 3px; padding: 4px 9px; border-radius: 999px;
+  background: var(--surface-2); font-weight: 800; font-size: 11.5px; white-space: nowrap; }
+.mchip b { font-weight: 900; }
+.mchip.kcal { background: var(--carrot-tint); color: var(--carrot); }
+.mchip.p { color: var(--leaf-deep); } .mchip.c { color: #C98A00; } .mchip.f { color: var(--grape); }
+
+/* Comidas realizadas en verde */
+.meal-row.done { background: var(--leaf-tint); border-color: var(--leaf); }
+.meal-row.done .meal-dish { color: var(--leaf-deep); }
+.cal-cell.hasdone { background: var(--leaf-tint); border-color: var(--leaf); color: var(--leaf-deep); }
+.cal-cell.hasdone.sel { background: var(--leaf); color:#fff; }
+
+/* =========================================================
+   Fotos (IA, sin copyright) — se superponen al color/emoji
+   ========================================================= */
+.zphoto { display:block; background:transparent; }
+.hero-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1; }
+.thumb-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1; }
+.now-hero .now-badge { z-index:2; }
+.now-hero .hero-emoji { z-index:0; }
+.detail-hero .hero-emoji { z-index:0; }
+/* Miniatura de producto en la lista de la compra */
+.si-thumb-wrap { width:44px; height:44px; border-radius:11px; overflow:hidden; position:relative; flex:0 0 auto;
+  background:var(--surface-2); display:grid; place-items:center; font-size:22px; }
+.si-thumb { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1; }
+.si-thumb-emoji { position:relative; z-index:0; }
+
+/* Subtítulo de sección */
+.sub-h { font-weight:900; font-size:14px; margin:14px 0 6px; color:var(--ink); display:flex; align-items:center; gap:6px; }
+
+/* Congelados / descongelación */
+.thaw-alert { background: linear-gradient(135deg,#5FC7FF,#3E8BE0); color:#fff; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.thaw-alert .ta-title { font-weight: 900; font-size: 15px; display:flex; align-items:center; gap:8px; }
+.freeze-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow-sm); border:1px solid var(--line); margin-bottom:8px; }
+.freeze-item.frozen { opacity:.7; } .freeze-item.frozen .fi-name { text-decoration: line-through; }
+
+/* Ejercicio */
+.ex-card { display:flex; gap:14px; align-items:center; padding:14px; border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow-sm); border:1px solid var(--line); margin-bottom:10px; }
+.ex-draw { width:92px; height:74px; border-radius:16px; background:var(--surface-2); color:var(--carrot); flex:0 0 auto; padding:6px; }
+.ex-card.done { background:var(--leaf-tint); border-color:var(--leaf); }
+.ex-card.done .ex-draw { color: var(--leaf-deep); }
+.ex-badge { display:inline-block; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:800; background:var(--surface-2); margin-right:5px; }
+/* Series/reps grandes y claras */
+.ex-figures { display:flex; gap:8px; margin:6px 0; flex-wrap:wrap; }
+.ex-fig { background:var(--surface-2); border-radius:12px; padding:6px 10px; text-align:center; min-width:52px; }
+.ex-fig b { display:block; font-size:20px; font-weight:900; line-height:1; color:var(--carrot); }
+.ex-fig span { font-size:10.5px; font-weight:800; color:var(--ink-2); text-transform:uppercase; letter-spacing:.4px; }
+.ex-how { display:inline-flex; align-items:center; gap:5px; margin-top:4px; padding:6px 12px; border-radius:999px;
+  background:var(--leaf); color:#fff; font-weight:800; font-size:12.5px; }
+
+/* Aviso "toca comer" grande y parpadeante */
+.due-banner { display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#3FD07E,#1B998B); color:#fff;
+  padding:12px 16px; border-radius:var(--radius); font-weight:900; margin-bottom:12px; box-shadow:var(--shadow);
+  animation: pulseGreen 1.3s ease-in-out infinite; }
+.due-banner .db-time { font-size:20px; }
+@media (prefers-reduced-motion: reduce){ .due-banner { animation:none; } }
+
+/* Momento de cocinar (preparados) — parpadeo verde rápido */
+@keyframes pulseGreenFast { 0%,100%{ box-shadow:0 0 0 0 rgba(47,191,113,.0);} 50%{ box-shadow:0 0 0 4px rgba(47,191,113,.6);} }
+.cook-now { background:linear-gradient(135deg,#3FD07E,#1B998B); color:#fff; border-radius:var(--radius); padding:14px 16px;
+  font-weight:900; margin-bottom:12px; animation: pulseGreenFast .8s ease-in-out infinite; display:flex; align-items:center; gap:10px; }
+@media (prefers-reduced-motion: reduce){ .cook-now { animation:none; } }
+
+/* Cocción precisa */
+.cook-tip { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); font-weight:600; line-height:1.45; font-size:14px; }
+.cook-tip:last-child { border-bottom:none; }
+
+/* Botones redondos junto al título Súper (misma familia que la burbuja IA) */
+.round-btn { width:52px; height:52px; border-radius:50%; flex:0 0 auto; color:#fff;
+  box-shadow:var(--shadow-sm); display:grid; place-items:center; font-size:24px; }
+.round-btn:active { transform:scale(.95); }
+.round-btn.cam { background:linear-gradient(135deg,#5B5F66,#33363B); }
+.round-btn.chart { background:linear-gradient(135deg,#7C5CFC,#5B3FE0); }
+
+/* Gráfico anual (12 meses) */
+.bars-year { display:flex; align-items:flex-end; gap:4px; height:130px; padding:10px 2px 0; }
+.bars-year .col { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end; min-width:0; }
+.bars-year .col .b { width:100%; border-radius:5px 5px 3px 3px; background:linear-gradient(to top,var(--grape),#9A82FF); transition:height .5s var(--ease); min-height:3px; }
+.bars-year .col .b.future { background:var(--line); }
+.bars-year .col small { font-size:9px; font-weight:800; color:var(--ink-3); }
+
+/* Botón de ayuda "?" */
+.help-q { width:28px; height:28px; border-radius:50%; background:var(--carrot-tint); color:var(--carrot);
+  font-weight:900; font-size:15px; display:grid; place-items:center; flex:0 0 auto; }
+code { background:var(--surface-2); padding:1px 6px; border-radius:6px; font-size:.9em; font-family:ui-monospace,monospace; }
+
+/* Resumen "Hoy" en inicio */
+.sum-group { margin-bottom: 14px; }
+.sum-h { display:flex; align-items:center; gap:8px; font-weight:900; font-size:14px; margin-bottom:8px; color:var(--ink-2); }
+.sum-h span { margin-left:auto; background:var(--carrot-tint); color:var(--carrot); font-size:12px; padding:2px 9px; border-radius:999px; }
+.sum-item { display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:10px 12px; border-radius:var(--radius-sm);
+  background:var(--surface); box-shadow:var(--shadow-sm); border:1px solid var(--line); margin-bottom:8px; transition:transform .15s var(--ease); }
+.sum-item:active { transform:scale(.98); }
+.sum-ic { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-size:24px; flex:0 0 auto; }
+.sum-t { font-weight:800; font-size:14.5px; }
+.sum-m { font-size:12px; color:var(--ink-2); font-weight:700; margin-top:1px; }
+
+/* Botón hoja verde de dietas especiales (esquina onboarding) */
+.leaf-btn { position:absolute; top:max(10px,env(safe-area-inset-top)); right:14px; z-index:5;
+  width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,var(--leaf),var(--leaf-deep));
+  color:#fff; display:grid; place-items:center; font-size:22px; box-shadow:0 8px 20px rgba(47,191,113,.35); }

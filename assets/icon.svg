@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFB05C"/>
+      <stop offset="1" stop-color="#F26419"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g transform="translate(256 262) rotate(18)">
+    <!-- Hojas -->
+    <g fill="#2FBF71">
+      <path d="M-6 -150 C-30 -205 -66 -216 -84 -206 C-70 -178 -42 -158 -8 -150 Z"/>
+      <path d="M2 -158 C0 -220 26 -252 48 -252 C50 -214 32 -178 6 -156 Z"/>
+      <path d="M10 -150 C40 -200 78 -206 92 -196 C74 -170 44 -152 10 -148 Z"/>
+    </g>
+    <!-- Cuerpo de la zanahoria -->
+    <path d="M-70 -120 C-30 -150 40 -150 78 -118 C58 20 22 150 4 176 C-14 150 -52 8 -70 -120 Z" fill="#FF7A1A"/>
+    <path d="M-70 -120 C-30 -150 40 -150 78 -118 C58 20 22 150 4 176 C-14 150 -52 8 -70 -120 Z" fill="none" stroke="#E8570F" stroke-width="6" opacity="0.35"/>
+    <!-- Mordisco -->
+    <path d="M78 -118 C58 -104 44 -86 58 -66 C74 -78 84 -100 78 -118 Z" fill="#FFF8F0"/>
+    <!-- Líneas de textura -->
+    <g stroke="#E8570F" stroke-width="5" stroke-linecap="round" opacity="0.5">
+      <line x1="-40" y1="-70" x2="-24" y2="-64"/>
+      <line x1="30" y1="-40" x2="46" y2="-46"/>
+      <line x1="-30" y1="20" x2="-14" y2="26"/>
+      <line x1="18" y1="60" x2="32" y2="54"/>
+    </g>
+    <!-- Ojos divertidos -->
+    <g>
+      <circle cx="-24" cy="-70" r="24" fill="#fff"/>
+      <circle cx="26" cy="-64" r="24" fill="#fff"/>
+      <circle cx="-18" cy="-66" r="11" fill="#2B2118"/>
+      <circle cx="32" cy="-60" r="11" fill="#2B2118"/>
+      <circle cx="-14" cy="-70" r="4" fill="#fff"/>
+      <circle cx="36" cy="-64" r="4" fill="#fff"/>
+    </g>
+    <!-- Sonrisa -->
+    <path d="M-16 -28 Q4 -8 28 -26" fill="none" stroke="#2B2118" stroke-width="7" stroke-linecap="round"/>
+    <!-- Mejillas -->
+    <circle cx="-40" cy="-34" r="10" fill="#FF5A6E" opacity="0.5"/>
+    <circle cx="44" cy="-28" r="10" fill="#FF5A6E" opacity="0.5"/>
+  </g>
+</svg>
