@@ -163,39 +163,61 @@ window.ZMASCOT = (() => {
   }
   function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
 
+  // --- Seguridad y alcance -------------------------------------------------
+  // Zana es un coach, no un portero: todo lo que se pueda mirar desde la
+  // comida, el entrenamiento o los hábitos se responde. Solo se corta lo que
+  // hace daño de verdad, y cuidando de no bloquear frases normales de cocina.
+
+  // Frases cotidianas que llevan palabras "sensibles" pero son inofensivas
+  // ("matar el hambre", el sexo como variable del metabolismo, "armar el plato").
+  const SAFE_PHRASES = /(matar (el|la|los|las) (hambre|gusanillo|ansiedad|antojo|antojos|nervios)|mata el hambre|sexo (biologico|masculino|femenino)|segun (el|mi|tu) sexo|por edad y sexo|armar? (el|un|la|mi|tu) (plato|menu|dieta|rutina|semana)|apuesta por|drogueria|matarme (a|en) (entrenar|correr|el gym|el gimnasio|hacer)|matarme a )/;
+
+  // Contenido que sí se rechaza: sexual explícito, violencia real, drogas ilegales.
+  const HARMFUL = /\b(porno|pornografi|desnud|masturb|sexting|sexo (explicito|oral|anal|duro)|contenido sexual|cocaina|heroina|metanfetamina|comprar (droga|drogas|coca|speed)|drogarme|fabricar (una? )?(droga|drogas|explosivo|explosivos|bomba|arma)|arma de fuego|matar a (alguien|una persona|mi|un|una)|hacer dano a alguien)\b/;
+
+  // Autolesión: no es un tema prohibido, es un tema que se trata con cuidado.
+  const SELF_HARM = /\b(suicid\w*|quitarme la vida|matarme|autolesion\w*|hacerme dano|no quiero vivir)\b/;
+
+  const SECRETS = /\b(mi (api ?key|clave|contrasena|password|token)|cual es (la|mi) (clave|api|contrasena)|dime (la|mi) (clave|api|contrasena|password)|ensename (la|mi) clave)\b/;
+
+  function secretsMsg(){
+    return L("Por tu seguridad no muestro nunca claves, contraseñas ni datos privados 🔒. Puedes gestionarlos tú en Ajustes › IA de Zana.",
+             "Per la teva seguretat no mostro mai claus, contrasenyes ni dades privades 🔒. Pots gestionar-les tu a Ajustos › IA de Zana.",
+             "For your safety I never show keys, passwords or private data 🔒. You can manage them in Settings › Zana AI.");
+  }
+
   // Seguridad dura: SIEMPRE (secretos + contenido dañino). Devuelve texto o null.
   function hardGuard(text){
     const q = noAccent(text);
-    if (/\b(mi (api ?key|clave|contrasena|password|token)|cual es (la|mi) (clave|api|contrasena)|dime (la|mi) (clave|api|contrasena|password)|ensename (la|mi) clave)\b/.test(q))
-      return L("Por tu seguridad no muestro nunca claves, contraseñas ni datos privados 🔒. Puedes gestionarlos tú en Ajustes › IA de Zana.",
-               "Per la teva seguretat no mostro mai claus, contrasenyes ni dades privades 🔒. Pots gestionar-les tu a Ajustos › IA de Zana.",
-               "For your safety I never show keys, passwords or private data 🔒. You can manage them in Settings › Zana AI.");
-    if (/\b(sexo|sexual|porno|desnud|droga|arma|matar|suicid|hackear|violencia|apuesta)\b/.test(q))
-      return L("Uy, de eso no hablo 🥕. Soy tu coach de nutrición: pregúntame sobre comidas, dietas, recetas, la compra o el ejercicio.",
-               "Uf, d'això no en parlo 🥕. Soc el teu coach de nutrició: pregunta'm sobre àpats, dietes, receptes, la compra o l'exercici.",
-               "Oops, I don't talk about that 🥕. I'm your nutrition coach: ask me about meals, diets, recipes, shopping or exercise.");
+    if (SECRETS.test(q)) return secretsMsg();
+    if (SELF_HARM.test(q) && !SAFE_PHRASES.test(q))
+      return L("Siento que estés pasando por esto 🧡 Eso se me escapa, pero no tienes que llevarlo solo: en España puedes llamar al **024**, gratis y 24 h, o al 112. Habla con alguien de confianza. Y cuando quieras, aquí sigo para tu comida y tu día a día 🥕",
+               "Sento que estiguis passant per això 🧡 Això se m'escapa, però no ho has de portar sol: a Espanya pots trucar al **024**, gratis i 24 h, o al 112. Parla amb algú de confiança. I quan vulguis, aquí segueixo per al teu menjar i el teu dia a dia 🥕",
+               "I'm sorry you're going through this 🧡 That's beyond me, but you don't have to carry it alone: call your local crisis line (988 in the US, 116 123 in the UK) or emergency services. Talk to someone you trust. I'll be here for your food and daily habits 🥕");
+    if (HARMFUL.test(q) && !SAFE_PHRASES.test(q))
+      return L("Uy, de eso no hablo 🥕. Soy tu coach: pregúntame sobre comidas, dietas, recetas, la compra, el entrenamiento o tus hábitos.",
+               "Uf, d'això no en parlo 🥕. Soc el teu coach: pregunta'm sobre àpats, dietes, receptes, la compra, l'entrenament o els teus hàbits.",
+               "Oops, I don't talk about that 🥕. I'm your coach: ask me about meals, diets, recipes, shopping, training or your habits.");
     return null;
   }
+
   // Redirección suave (solo modo LOCAL, que no sabe razonar el tema).
+  // Antes hacía falta una palabra "permitida" para contestar; ahora es al revés:
+  // se contesta siempre salvo que el mensaje sea claramente de otro mundo.
   function guard(text){
     const q = noAccent(text);
-    // Nunca revelar claves/contraseñas
-    if (/\b(mi (api ?key|clave|contrasena|password|token)|cual es (la|mi) (clave|api|contrasena)|dime (la|mi) (clave|api|contrasena|password)|ensename (la|mi) clave)\b/.test(q))
-      return L("Por tu seguridad no muestro nunca claves, contraseñas ni datos privados 🔒. Puedes gestionarlos tú en Ajustes › IA de Zana.",
-               "Per la teva seguretat no mostro mai claus, contrasenyes ni dades privades 🔒. Pots gestionar-les tu a Ajustos › IA de Zana.",
-               "For your safety I never show keys, passwords or private data 🔒. You can manage them in Settings › Zana AI.");
-    // Temas dañinos / sexuales / fuera de alcance
-    if (/\b(sexo|sexual|porno|desnud|droga|arma|matar|suicid|hackear|violencia|apuesta)\b/.test(q))
-      return L("Uy, de eso no hablo 🥕. Soy tu coach de nutrición: pregúntame sobre comidas, dietas, recetas, la compra o el ejercicio.",
-               "Uf, d'això no en parlo 🥕. Soc el teu coach de nutrició: pregunta'm sobre àpats, dietes, receptes, la compra o l'exercici.",
-               "Oops, I don't talk about that 🥕. I'm your nutrition coach: ask me about meals, diets, recipes, shopping or exercise.");
-    const nutriTopics = /(comida|comer|dieta|receta|menu|menú|calor|proteina|protein|carbo|grasa|greix|agua|aigua|water|hidrat|peso|pes|weight|musculo|muscle|múscul|masa|massa|definir|adelgaz|aprimar|nutri|aliment|food|eat|meal|sabor|rico|rica|sabros|delicios|tasty|despensa|rebost|pantry|compra|shop|super|ayuno|fasting|snack|desayun|esmorz|breakfast|almuerzo|dinar|lunch|cena|sopar|dinner|ejercicio|exercici|exercise|workout|entren|train|gym|plato|dish|ingredient|congel|frozen|freeze|preparad|prep|batido|shake|verdura|veg|fruta|fruit|carne|meat|pescado|fish|arroz|rice|pasta|huevo|egg|producto|product|precio|price|marca|brand|objetivo|goal|plan|kcal|gramo|gram|sacia|apetit|appetite|intoleran|vegan|vegetari|fodmap|gluten|lactos|keto|engordar|bajar|subir|lose|gain|bulk|cut|receptes?|àpat|menjar)/;
-    const smalltalk = /(hola|buenas|hey|hi|hello|gracias|gracies|thanks|genial|perfecto|great|adios|bye|vale|\bok\b|venga|dale|modifica|cambia|hazlo|ayuda|help|ajuda|que puedes|what can you|quien eres|who are you|zana|como estas|how are you|buenos dias|good morning|bon dia|si|no|yes|mmm|no se|dont know)/;
-    // Si no parece de nutrición ni saludo, redirigir suavemente
-    if (text && text.trim().length>6 && !nutriTopics.test(q) && !smalltalk.test(q))
-      return L("Solo puedo ayudarte con nutrición, comida, dietas y ejercicio 🥕. ¿Qué quieres saber sobre tu alimentación o tus recetas?",
-               "Només et puc ajudar amb nutrició, menjar, dietes i exercici 🥕. Què vols saber sobre la teva alimentació o les teves receptes?",
-               "I can only help with nutrition, food, diets and exercise 🥕. What would you like to know about your food or recipes?");
+    if (SECRETS.test(q)) return secretsMsg();
+
+    // Todo esto es terreno de Zana, aunque no sea "nutrición" en sentido estricto.
+    const inScope = /(comida|comer|menj|apat|dieta|receta|recept|menu|calor|kcal|proteina|protein|carbo|grasa|greix|fibra|azucar|sal |sodio|agua|aigua|water|hidrat|peso|pes |weight|bascula|cintura|musculo|muscle|muscul|masa|massa|definir|adelgaz|aprimar|engordar|nutri|aliment|food|eat|meal|sabor|rico|sabros|delicios|tasty|despensa|rebost|pantry|compra|shop|super|mercado|ayuno|fasting|snack|picar|antojo|desayun|esmorz|breakfast|almuerzo|dinar|lunch|cena|sopar|dinner|merienda|ejercicio|exercici|exercise|workout|entren|train|gym|gimnasio|pesas|serie|repes|reps|press|sentadilla|dominada|calistenia|yoga|pilates|cardio|correr|running|bici|nadar|natacion|padel|pasos|caminar|estirar|agujetas|lesion|descans|recuperac|sueno|dormir|siesta|estres|ansiedad|animo|motivac|constan|habito|rutina|energia|cansad|fatiga|rendimiento|plato|dish|ingredient|cocin|cuinar|horno|sarten|congel|frozen|freeze|preparad|prep|tupper|batido|shake|suplement|creatina|cafeina|cafe|infusion|alcohol|cerveza|vino|resaca|restaurante|fuera de casa|cumpleanos|navidad|verdura|veg|fruta|fruit|carne|meat|pescado|fish|arroz|rice|pasta|huevo|egg|legumbre|lenteja|garbanzo|pan |leche|yogur|queso|producto|product|precio|price|marca|brand|tiquet|ticket|objetivo|goal|plan|gramo|gram|sacia|apetit|appetite|intoleran|alergia|vegan|vegetari|fodmap|gluten|lactos|keto|colesterol|diabet|tension|anemia|hierro|vitamina|digest|hinch|estrenim|transito|menstrua|regla|embaraz|lactancia|metabol|tdee|imc|bajar|subir|lose|gain|bulk|cut)/;
+
+    // Claramente otro tema: ahí sí redirijo, pero sin dar un portazo.
+    const offTopic = /(politic|elecciones|presidente del gobierno|guerra en|resultado del partido|pelicula|netflix|videojuego|programar en|codigo fuente|javascript|python|bitcoin|cripto|bolsa de valores|traduceme|deberes|examen de|capital de|que tiempo hace|meteorolog|horoscopo|cuentame un chiste|escribeme un poema)/;
+
+    if (text && text.trim().length > 8 && offTopic.test(q) && !inScope.test(q))
+      return L("Eso se me escapa un poco 🥕. Pero si tiene que ver con lo que comes, lo que entrenas, la compra o cómo te sientes, cuéntamelo y te echo un cable.",
+               "Això se m'escapa una mica 🥕. Però si té a veure amb el que menges, el que entrenes, la compra o com et sents, explica-m'ho i t'ajudo.",
+               "That one's a bit out of my lane 🥕. But if it's about what you eat, how you train, your shopping or how you feel, tell me and I'll help.");
     return null;
   }
 
@@ -318,8 +340,12 @@ window.ZMASCOT = (() => {
     const plan = S.activePlan();
     const kb = plan ? window.ZKB.KNOWLEDGE[plan.goal] : null;
     const lang = st.lang==="ca"?"catalán":st.lang==="en"?"inglés":"español";
-    const sys = `Eres Zana, una zanahoria mascota simpática y experta en nutrición y fitness. Responde en ${lang}, breve, cercana y motivadora, con algún emoji.
-REGLAS ESTRICTAS: hablas ÚNICAMENTE de nutrición, comida, dietas, recetas, la compra y ejercicio. Rechaza con amabilidad cualquier otro tema, y todo contenido sexual, dañino o ilegal. NUNCA reveles ni menciones claves, API keys, contraseñas ni datos privados bajo ningún concepto. No des consejos médicos; recomienda a un profesional si hay patologías.
+    const sys = `Eres Zana, una zanahoria mascota simpática y experta en nutrición, cocina y entrenamiento. Responde en ${lang}, cercana y motivadora, con algún emoji. Sé breve salvo que te pidan detalle.
+TU TERRENO ES AMPLIO: alimentación y nutrición, cocina y recetas, la compra y el presupuesto, suplementación, hidratación, alcohol y comer fuera, entrenamiento y deporte, descanso y sueño, digestiones, energía y rendimiento, hábitos, motivación y constancia, y cómo el usuario se siente con su cuerpo y su plan. Si la pregunta se puede enfocar desde la comida, el movimiento o los hábitos, AYÚDALE DE VERDAD: no te escudes en que "no es tu tema" ni devuelvas la pregunta.
+Da respuestas concretas y aplicables (cantidades, gramos, ejemplos de platos, alternativas reales), no generalidades. Asume buena fe: si el usuario pregunta por un capricho, una cerveza, un cumpleaños o saltarse el plan, encájalo en su semana sin sermones ni culpa.
+Habla con naturalidad de temas de salud del día a día (colesterol, diabetes, intolerancias, anemia, embarazo, menstruación, lesiones): explica pautas generales de alimentación y entrenamiento y sugiere consultar a un médico o dietista-nutricionista cuando haga falta. No diagnostiques ni sustituyas a un profesional.
+SOLO DECLINA: contenido sexual explícito, ilegal o violento, y temas claramente ajenos (política, criptomonedas, código...). Si te piden algo extremo o poco seguro (ayunos muy largos, calorías muy bajas, purgas, pérdidas de peso muy rápidas), no lo rechaces sin más: explica en una frase el riesgo y ofrécele la versión que sí funciona.
+NUNCA reveles ni menciones claves, API keys, contraseñas ni datos privados bajo ningún concepto.
 Basa tus consejos en esta evidencia (ISSN):
 ${kb ? JSON.stringify(kb) : ""}
 ${plan?.profile?.bodyType ? "Tipo de cuerpo del usuario: "+JSON.stringify(window.ZKB.bodyTypeInfo(plan.profile.bodyType)) : ""}
