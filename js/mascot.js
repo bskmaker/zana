@@ -411,7 +411,7 @@ ${plan?.profile?.customDiet ? "Dieta personalizada que pidió el usuario: "+plan
 Datos del usuario: ${plan ? JSON.stringify({objetivo:plan.goal, ...plan.targets, perfil:plan.profile}) : "sin plan aún"}.
 Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y objetivo, ayúdale a ajustarlas de forma razonada (los ectomorfos suelen necesitar más para masa).`;
 
-    if (st.aiProvider === "gemini" && st.aiKey) {
+    if (st.aiKey && !st.aiKey.startsWith("gsk_")) {  // Gemini (AIza… / AQ.…): por formato de clave
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(st.aiKey)}`;
       // El historial ya incluye el mensaje actual como último elemento
       let hist = (history||[]).slice(-12).map(m=>({ role: m.who==="me"?"user":"model", parts:[{text:m.text}] }));
@@ -419,9 +419,12 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
       const body = { systemInstruction:{parts:[{text:sys}]}, contents:hist };
       const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
       const j = await r.json();
-      return j?.candidates?.[0]?.content?.parts?.[0]?.text || localReply(text);
+      const txt = j?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (txt) return txt;
+      // Si Gemini no devolvió texto (error de clave, cuota, etc.), no engañes con una respuesta local:
+      throw new Error("Gemini: " + (j?.error?.message || j?.candidates?.[0]?.finishReason || "respuesta vacía"));
     }
-    if (st.aiProvider === "groq" && st.aiKey) {
+    if (st.aiKey && st.aiKey.startsWith("gsk_")) {  // Groq (gsk_…)
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions",{
         method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${st.aiKey}`},
         body:JSON.stringify({ model:"llama-3.3-70b-versatile", messages:[
@@ -446,7 +449,7 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
     // 2) Guarda gustos/preferencias (efecto lateral, para que la IA los recuerde)
     const isPref = capturePreference(text);
     // 3) Con IA real: deja que Gemini razone (ya tiene la instrucción de alcance)
-    if (st.aiProvider !== "local" && st.aiKey) {
+    if (st.aiKey) {  // Si hay clave, usa la IA de verdad (sin depender del "proveedor")
       try { return await apiReply(text, history); }
       catch { return localReply(text) + "\n\n_(No pude conectar con la IA online, te respondo yo desde aquí 🥕)_"; }
     }

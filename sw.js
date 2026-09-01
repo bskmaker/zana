@@ -1,18 +1,18 @@
 /* ZANA · Service Worker (offline cache) */
-const CACHE = "zana-v22";
+const CACHE = "zana-v23";
 const ASSETS = [
   "index.html",
   "manifest.webmanifest",
-  "css/app.css?v=22",
-  "js/data.js?v=22",
-  "js/photos.js?v=22",
-  "js/knowledge.js?v=22",
-  "js/i18n.js?v=22",
-  "js/engine.js?v=22",
-  "js/store.js?v=22",
-  "js/mascot.js?v=22",
-  "js/ui.js?v=22",
-  "js/app.js?v=22",
+  "css/app.css?v=23",
+  "js/data.js?v=23",
+  "js/photos.js?v=23",
+  "js/knowledge.js?v=23",
+  "js/i18n.js?v=23",
+  "js/engine.js?v=23",
+  "js/store.js?v=23",
+  "js/mascot.js?v=23",
+  "js/ui.js?v=23",
+  "js/app.js?v=23",
   "assets/icon.svg",
   "assets/icon-maskable.svg",
 ];
