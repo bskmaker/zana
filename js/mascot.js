@@ -243,6 +243,21 @@ window.ZMASCOT = (() => {
     return null;
   }
 
+  // Detecta y guarda gustos/preferencias (efecto lateral; no corta la respuesta)
+  function capturePreference(text){
+    const q = noAccent(text);
+    if (/\b(no me gusta|no me gustan|odio)\b/.test(q)) return false; // eso es "no quiero"
+    if (/\b(me gusta|me gustan|me encanta|me encantan|me chifla|me chiflan|adoro|soy fan|me apetec|mi comida favorita|mis comidas favoritas|mi plato favorito|mis platos favoritos|prefiero (comer|los? platos?|las? comidas?|comidas|platos)|suelo comer|me flipa|me flipan|i like|i love|m'agrada|m'encanta)\b/.test(q)){
+      S.addPreference(text); return true;
+    }
+    return false;
+  }
+  function prefAck(){
+    return L("¡Anotado! 🥕 Recordaré tus gustos para adaptarte los menús y consejos. Si quieres, dime qué NO te gusta y lo evito.",
+             "Apuntat! 🥕 Recordaré els teus gustos per adaptar-te els menús i consells. Si vols, digues-me què NO t'agrada i ho evito.",
+             "Noted! 🥕 I'll remember your tastes to tailor your menus and tips. If you want, tell me what you DON'T like and I'll avoid it.");
+  }
+
   // Redirección suave (solo modo LOCAL, que no sabe razonar el tema).
   // Antes hacía falta una palabra "permitida" para contestar; ahora es al revés:
   // se contesta siempre salvo que el mensaje sea claramente de otro mundo.
@@ -391,6 +406,7 @@ NUNCA reveles ni menciones claves, API keys, contraseñas ni datos privados bajo
 Basa tus consejos en esta evidencia (ISSN):
 ${kb ? JSON.stringify(kb) : ""}
 ${plan?.profile?.bodyType ? "Tipo de cuerpo del usuario: "+JSON.stringify(window.ZKB.bodyTypeInfo(plan.profile.bodyType)) : ""}
+${plan?.profile?.preferences ? "Gustos y comidas favoritas del usuario (tenlos en cuenta al aconsejar y proponer): "+plan.profile.preferences : ""}
 ${plan?.profile?.customDiet ? "Dieta personalizada que pidió el usuario: "+plan.profile.customDiet : ""}
 Datos del usuario: ${plan ? JSON.stringify({objetivo:plan.goal, ...plan.targets, perfil:plan.profile}) : "sin plan aún"}.
 Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y objetivo, ayúdale a ajustarlas de forma razonada (los ectomorfos suelen necesitar más para masa).`;
@@ -427,12 +443,15 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
     // 1) Seguridad dura SIEMPRE (secretos, contenido dañino)
     const hard = hardGuard(text);
     if (hard) return hard;
-    // 2) Con IA real: deja que Gemini razone (ya tiene la instrucción de alcance)
+    // 2) Guarda gustos/preferencias (efecto lateral, para que la IA los recuerde)
+    const isPref = capturePreference(text);
+    // 3) Con IA real: deja que Gemini razone (ya tiene la instrucción de alcance)
     if (st.aiProvider !== "local" && st.aiKey) {
       try { return await apiReply(text, history); }
       catch { return localReply(text) + "\n\n_(No pude conectar con la IA online, te respondo yo desde aquí 🥕)_"; }
     }
-    // 3) Modo local: redirección suave si claramente no es de nutrición
+    // 4) Modo local: si expresó gustos, confírmalo; si no, redirección suave
+    if (isPref) return prefAck();
     const g = guard(text);
     if (g) return g;
     return localReply(text);

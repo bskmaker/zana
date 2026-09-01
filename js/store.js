@@ -399,6 +399,16 @@ window.ZSTORE = (() => {
     regeneratePlan(p.id);
     save();
   }
+  // Guarda gustos/preferencias del usuario (texto libre) para que la IA los recuerde
+  function addPreference(text){
+    const p = activePlan(); if(!p || !text) return;
+    const t = text.trim();
+    const cur = p.profile.preferences || "";
+    if (cur.toLowerCase().includes(t.toLowerCase())) return; // ya está
+    p.profile.preferences = (cur ? cur + " · " : "") + t;
+    if (p.profile.preferences.length > 600) p.profile.preferences = p.profile.preferences.slice(-600);
+    save();
+  }
 
   function reset() { state = structuredClone(DEFAULT); save(); }
 
@@ -412,7 +422,7 @@ window.ZSTORE = (() => {
     dayExercises, exProgress, toggleExerciseDone, exercisesThisWeek,
     toggleFrozen, isFrozen, defrostAlerts,
     logIntolerance, analyzeIntolerances, suppressFood,
-    addPantry, pantryKnown, setDislike, setMeals, detectFoods,
+    addPantry, pantryKnown, setDislike, setMeals, addPreference, detectFoods,
     setProduct, foodPrice, foodBrands,
     reset,
   };

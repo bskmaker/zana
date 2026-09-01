@@ -3,3 +3,4 @@ zana-artifact.html
 .claude/
 __pycache__/
 zana-test-*.html
+node_modules/
