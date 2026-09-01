@@ -1,18 +1,18 @@
 /* ZANA · Service Worker (offline cache) */
-const CACHE = "zana-v23";
+const CACHE = "zana-v24";
 const ASSETS = [
   "index.html",
   "manifest.webmanifest",
-  "css/app.css?v=23",
-  "js/data.js?v=23",
-  "js/photos.js?v=23",
-  "js/knowledge.js?v=23",
-  "js/i18n.js?v=23",
-  "js/engine.js?v=23",
-  "js/store.js?v=23",
-  "js/mascot.js?v=23",
-  "js/ui.js?v=23",
-  "js/app.js?v=23",
+  "css/app.css?v=24",
+  "js/data.js?v=24",
+  "js/photos.js?v=24",
+  "js/knowledge.js?v=24",
+  "js/i18n.js?v=24",
+  "js/engine.js?v=24",
+  "js/store.js?v=24",
+  "js/mascot.js?v=24",
+  "js/ui.js?v=24",
+  "js/app.js?v=24",
   "assets/icon.svg",
   "assets/icon-maskable.svg",
 ];
@@ -34,6 +34,24 @@ self.addEventListener("fetch", e => {
   const url = new URL(req.url);
   // No cachear llamadas a las APIs de IA
   if (url.hostname.includes("googleapis.com") || url.hostname.includes("groq.com") || url.hostname.includes("pollinations.ai")) return;
+
+  // El CÓDIGO (html/js/css y navegaciones) va "red primero": si hay internet, siempre
+  // trae la última versión y actualiza la caché; sin internet, tira de la caché.
+  // El resto (fotos, iconos) va "caché primero" para que cargue rápido y offline.
+  const isCode = req.mode === "navigate" || /\.(html|js|css)$/i.test(url.pathname);
+
+  if (isCode && url.origin === location.origin) {
+    e.respondWith(
+      fetch(req).then(res => {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+        }
+        return res;
+      }).catch(() => caches.match(req, { ignoreSearch: true }))
+    );
+    return;
+  }
 
   e.respondWith(
     caches.match(req, { ignoreSearch: true }).then(cached => {
