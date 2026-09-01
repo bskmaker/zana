@@ -346,6 +346,37 @@ window.ZSTORE = (() => {
     }
     return [...new Set(hits)];
   }
+  // Grupos de categoría: si el usuario dice "no me gusta el queso / la carne / el pescado…"
+  // hay que excluir TODAS las variantes, no solo la que case por alias literal.
+  const FOOD_GROUPS = {
+    queso:     ["quesofresco","quesocurado","requeson"],
+    lacteo:    ["yogur","leche","quesofresco","quesocurado","requeson","nata"],
+    pescado:   ["salmon","atun","merluza","bacalao","sardinas","gambas"],
+    marisco:   ["gambas"],
+    legumbre:  ["lenteja","garbanzo","alubias","guisantes","edamame","sojatext"],
+    carne:     ["pollo","pavo","ternera","lomo"],
+    fruta:     ["platano","manzana","fresa","arandano","naranja","kiwi","pera","uvas","pina","frambuesa"],
+    verdura:   ["brocoli","espinaca","tomate","pimiento","cebolla","zanahoria","calabacin","berenjena","champinon","lechuga","pepino","judiaverde","coliflor","ajo"],
+    frutoseco: ["almendra","nueces"],
+    soja:      ["tofu","tempeh","edamame","sojatext","bebidasoja","salsasoja"],
+  };
+  const GROUP_WORDS = {
+    queso:["queso","quesos"], lacteo:["lacteo","lacteos","lacticinios","lacteas"],
+    pescado:["pescado","pescados","marisco","mariscos"], marisco:["marisco","mariscos"],
+    legumbre:["legumbre","legumbres"], carne:["carne","carnes","carnica"],
+    fruta:["fruta","frutas"], verdura:["verdura","verduras","vegetal","vegetales","hortaliza","hortalizas"],
+    frutoseco:["fruto seco","frutos secos"], soja:["soja"],
+  };
+  // Devuelve todos los ids a excluir cuando el usuario expresa un rechazo (incluye grupos).
+  function expandDislike(text){
+    const q = " " + _na(text) + " ";
+    const ids = new Set(detectFoods(text));
+    for(const [g,words] of Object.entries(GROUP_WORDS)){
+      if(words.some(w => q.includes(" "+_na(w)) || q.includes(_na(w)+" ")))
+        (FOOD_GROUPS[g]||[]).forEach(id => ids.add(id));
+    }
+    return [...ids];
+  }
   // Analiza patrones: alimentos que aparecen en >=2 incidencias
   function analyzeIntolerances(){
     const count={};
@@ -422,7 +453,7 @@ window.ZSTORE = (() => {
     dayExercises, exProgress, toggleExerciseDone, exercisesThisWeek,
     toggleFrozen, isFrozen, defrostAlerts,
     logIntolerance, analyzeIntolerances, suppressFood,
-    addPantry, pantryKnown, setDislike, setMeals, addPreference, detectFoods,
+    addPantry, pantryKnown, setDislike, setMeals, addPreference, detectFoods, expandDislike,
     setProduct, foodPrice, foodBrands,
     reset,
   };

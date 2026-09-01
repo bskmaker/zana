@@ -316,12 +316,16 @@ window.ZMASCOT = (() => {
                `Apuntat! 🧊 He afegit al teu rebost: ${fn}. Ho tindré en compte a la llista del súper perquè no compris de més.`,
                `Noted! 🧊 Added to your pantry: ${fn}. I'll keep it in mind in your shopping list so you don't overbuy.`);
     }
-    // No quiero comer X
-    if (/\b(no quiero|no me gusta|odio|quita|sin|elimina|no como)\b/.test(q) && foods.length){
-      foods.forEach(f=> S.setDislike(f, true));
-      return L(`Hecho ✅. Quitaré ${fn} de tus planes y buscaré alternativas. He regenerado tu menú.`,
-               `Fet ✅. Trauré ${fn} dels teus plans i buscaré alternatives. He regenerat el teu menú.`,
-               `Done ✅. I'll remove ${fn} from your plans and find alternatives. I've regenerated your menu.`);
+    // No quiero comer X (incluye categorías: "no me gusta el queso" quita TODOS los quesos)
+    if (/\b(no quiero|no me gusta|no me gustan|odio|detesto|no soporto|quita|quitar|elimina|eliminar|no como|no tomo|nada de)\b/.test(q)){
+      const dis = S.expandDislike(text);
+      if (dis.length){
+        dis.forEach(f=> S.setDislike(f, true));
+        const names = dis.map(f=>window.ZDATA.FOODS[f]?.name).filter(Boolean).join(", ");
+        return L(`Hecho ✅. Quito de tus planes: ${names}. Regenero tu menú con alternativas 🥕`,
+                 `Fet ✅. Trec dels teus plans: ${names}. Regenero el teu menú amb alternatives 🥕`,
+                 `Done ✅. Removing from your plans: ${names}. Regenerating your menu with alternatives 🥕`);
+      }
     }
     // Me sienta mal / me hincha
     if (/\b(me sienta mal|me hincha|me sienta pesado|me da gases|intoleran|no me sienta)\b/.test(q) && foods.length){
@@ -402,6 +406,7 @@ TU TERRENO ES AMPLIO: alimentación y nutrición, cocina y recetas, la compra y 
 Da respuestas concretas y aplicables (cantidades, gramos, ejemplos de platos, alternativas reales), no generalidades. Asume buena fe: si el usuario pregunta por un capricho, una cerveza, un cumpleaños o saltarse el plan, encájalo en su semana sin sermones ni culpa.
 Habla con naturalidad de temas de salud del día a día (colesterol, diabetes, intolerancias, anemia, embarazo, menstruación, lesiones): explica pautas generales de alimentación y entrenamiento y sugiere consultar a un médico o dietista-nutricionista cuando haga falta. No diagnostiques ni sustituyas a un profesional.
 SOLO DECLINA: contenido sexual explícito, ilegal o violento, y temas claramente ajenos (política, criptomonedas, código...). Si te piden algo extremo o poco seguro (ayunos muy largos, calorías muy bajas, purgas, pérdidas de peso muy rápidas), no lo rechaces sin más: explica en una frase el riesgo y ofrécele la versión que sí funciona.
+IMPORTANTE — tú NO puedes editar el plan de comidas por tu cuenta (eso lo hace la app). Si el usuario quiere quitar un alimento, NO digas "ya te he regenerado el menú"; dile que lo escriba claro, p. ej. "no me gusta el queso" o "quita el pescado", y la app lo eliminará y regenerará el plan al instante. Puedes sugerir sustituciones, pero el cambio real lo aplica la app.
 NUNCA reveles ni menciones claves, API keys, contraseñas ni datos privados bajo ningún concepto.
 Basa tus consejos en esta evidencia (ISSN):
 ${kb ? JSON.stringify(kb) : ""}
