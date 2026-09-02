@@ -35,7 +35,11 @@ window.ZSTORE = (() => {
     try {
       const raw = localStorage.getItem(KEY);
       if (!raw) return structuredClone(DEFAULT);
-      return Object.assign(structuredClone(DEFAULT), JSON.parse(raw));
+      const guardado = JSON.parse(raw);
+      // Object.assign usa [[Set]]: una clave __proto__ en el JSON cambiaria el
+      // prototipo del estado. Se descarta antes de mezclar.
+      if (guardado && typeof guardado === "object") delete guardado.__proto__;
+      return Object.assign(structuredClone(DEFAULT), guardado);
     } catch { return structuredClone(DEFAULT); }
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }

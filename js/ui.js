@@ -8,7 +8,9 @@ window.ZUI = (() => {
   // --- Helpers DOM ---------------------------------------------------------
   const $ = sel => document.querySelector(sel);
   function h(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstElementChild; }
-  const esc = s => String(s??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  // Escapa tambien la comilla simple: sin ella, un atributo escrito con
+  // comillas simples (data-x='${esc(v)}') seria una via de inyeccion.
+  const esc = s => String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
   // --- Toast ---------------------------------------------------------------
   function toast(msg, icon="🥕"){
@@ -151,7 +153,7 @@ window.ZUI = (() => {
       pushMsg("bot", T(intro));
     } else if (!chatHistory.length){
       if (needKey)
-        pushMsg("bot", T("¡Hola! 🥕 Soy Zana. Ya te puedo ayudar aquí mismo. Para que converse con más soltura, añade tu **clave de IA gratuita**: pulsa el botón 🔑 de abajo (te explico cómo) o pégala aquí directamente."));
+        pushMsg("bot", T("¡Hola! 🥕 Soy Zana. Ya te puedo ayudar aquí mismo. Para que converse con más soltura, añade tu **clave de IA gratuita** con el botón 🔑 de abajo. No la escribas en el chat: guárdala en Ajustes, que es donde está a salvo."));
       else
         pushMsg("bot", T("¡Hola! 🥕 Soy Zana. Pregúntame lo que quieras sobre tu dieta, recetas, la compra o el ejercicio."));
     } else {
@@ -187,6 +189,23 @@ window.ZUI = (() => {
   }
   function pushMsg(who, text){ chatHistory.push({who,text}); renderMsg(who,text); }
 
+  // Si el usuario pega una clave en el chat, se borra del historial y de la
+  // pantalla: el historial se envia al proveedor de IA en cada mensaje, asi que
+  // una clave ahi acabaria dentro del prompt (y de los logs del proveedor).
+  function redactFromChat(secreto){
+    if (!secreto || secreto.length < 12) return;
+    const MARCA = "🔑 ••••••";
+    chatHistory.forEach(m => {
+      if (m.text && m.text.includes(secreto)) m.text = m.text.split(secreto).join(MARCA);
+    });
+    const scroll = document.querySelector("#chatScroll");
+    if (!scroll) return;
+    scroll.querySelectorAll(".msg").forEach(el => {
+      if (el.textContent && el.textContent.includes(secreto))
+        el.innerHTML = mdLite(el.textContent.split(secreto).join(MARCA));
+    });
+  }
+
   async function send(text){
     text = (text||"").trim(); if(!text) return;
     const input = document.querySelector("#chatInput"); if(input) input.value="";
@@ -221,5 +240,5 @@ window.ZUI = (() => {
   function refreshChrome(active){ applyTheme(); renderDailyBar(); renderNavbar(active); renderFab(); window.ZI18N && ZI18N.apply($("#navbar")); window.ZI18N && ZI18N.apply($("#dailyBar")); }
 
   return { $, h, esc, toast, renderDailyBar, renderNavbar, renderFab, refreshChrome, applyTheme,
-           openChat, closeChat, openSheet, closeSheet, mdLite };
+           openChat, closeChat, openSheet, closeSheet, mdLite, redactFromChat };
 })();
