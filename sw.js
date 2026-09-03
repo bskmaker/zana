@@ -1,18 +1,22 @@
 /* ZANA · Service Worker (offline cache) */
-const CACHE = "zana-v25";
+const CACHE = "zana-v26";
+// Precache: solo el esqueleto de la app. js/photos.js (2,7 MB de imagenes)
+// queda fuera a proposito: addAll() es atomico y, con mala cobertura, esa
+// descarga hacia fallar la instalacion entera del service worker y la app se
+// quedaba sin modo offline. Se cachea igual al vuelo en el fetch.
 const ASSETS = [
   "index.html",
   "manifest.webmanifest",
-  "css/app.css?v=25",
-  "js/data.js?v=25",
-  "js/photos.js?v=25",
-  "js/knowledge.js?v=25",
-  "js/i18n.js?v=25",
-  "js/engine.js?v=25",
-  "js/store.js?v=25",
-  "js/mascot.js?v=25",
-  "js/ui.js?v=25",
-  "js/app.js?v=25",
+  "css/app.css?v=26",
+  "js/data.js?v=26",
+  "js/knowledge.js?v=26",
+  "js/i18n.js?v=26",
+  "js/engine.js?v=26",
+  "js/store.js?v=26",
+  "js/mascot.js?v=26",
+  "js/ui.js?v=26",
+  "js/app.js?v=26",
+  "js/sw-register.js?v=26",
   "assets/icon.svg",
   "assets/icon-maskable.svg",
 ];

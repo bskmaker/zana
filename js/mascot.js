@@ -205,6 +205,20 @@ window.ZMASCOT = (() => {
   }
   function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
 
+  // --- Claves de API: formatos conocidos y redaccion ------------------------
+  // Solo se reconocen (y guardan) estos formatos. Cualquier otra cadena larga
+  // podria ser otra contrasena del usuario y no se toca.
+  const KEY_FORMATS_ONE = /(AIza[0-9A-Za-z_\-]{20,}|AQ\.[0-9A-Za-z_\-]{20,}|gsk_[0-9A-Za-z]{20,})/;
+  const KEY_FORMATS_ALL = /(AIza[0-9A-Za-z_\-]{20,}|AQ\.[0-9A-Za-z_\-]{20,}|gsk_[0-9A-Za-z]{20,})/g;
+
+  // Ultima red de seguridad antes de enviar nada al proveedor de IA: aunque una
+  // clave se cuele en el historial por otra via, nunca sale dentro del prompt.
+  function sinClaves(txt, claveActual){
+    let out = String(txt ?? "").replace(KEY_FORMATS_ALL, "[clave redactada]");
+    if (claveActual && claveActual.length >= 12) out = out.split(claveActual).join("[clave redactada]");
+    return out;
+  }
+
   // --- Seguridad y alcance -------------------------------------------------
   // Zana es un coach, no un portero: todo lo que se pueda mirar desde la
   // comida, el entrenamiento o los hábitos se responde. Solo se corta lo que
@@ -288,22 +302,25 @@ window.ZMASCOT = (() => {
       return customDietProsCons(text);
     }
     // ¿Han pegado una clave API? (Gemini AIza… o AQ.… / Groq gsk_…)
-    const keyMatch = (text||"").match(/(AIza[0-9A-Za-z_\-]{20,}|AQ\.[0-9A-Za-z_\-]{20,}|gsk_[0-9A-Za-z]{20,})/);
+    const keyMatch = (text||"").match(KEY_FORMATS_ONE);
     if (keyMatch){
       const k = keyMatch[1]; const st = S.get().settings;
       st.aiKey = k; st.aiProvider = k.startsWith("gsk_") ? "groq" : "gemini"; S.save();
-      return L("¡Clave guardada! 🔑 Ya puedo conversar contigo con IA de verdad. Pregúntame lo que quieras 🥕",
-               "Clau desada! 🔑 Ja puc parlar amb tu amb IA de veritat. Pregunta'm el que vulguis 🥕",
-               "Key saved! 🔑 Now I can really chat with AI. Ask me anything 🥕");
+      // Borrarla del chat: el historial viaja al proveedor en cada mensaje.
+      window.ZUI?.redactFromChat?.(k);
+      return L("¡Clave guardada! 🔑 La he borrado del chat para que no viaje en los mensajes. Ya puedo conversar contigo con IA de verdad 🥕",
+               "Clau desada! 🔑 L'he esborrat del xat perquè no viatgi als missatges. Ja puc parlar amb tu amb IA de veritat 🥕",
+               "Key saved! 🔑 I removed it from the chat so it doesn't travel in your messages. Now I can really chat with AI 🥕");
     }
-    // Token largo sin espacios: parece una clave pegada aunque no sea AIza/gsk_
+    // Token largo sin espacios que NO es una clave conocida: no se guarda nada.
+    // Antes se guardaba cualquier cosa (una contraseña, un token de otro sitio)
+    // y acababa enviándose al proveedor de IA.
     const bare = (text||"").trim();
     if (/^[A-Za-z0-9._\-]{25,}$/.test(bare) && !/\s/.test(bare)){
-      const st = S.get().settings; st.aiKey = bare;
-      if (st.aiProvider==="local") st.aiProvider = "gemini"; S.save();
-      return L(`Guardé lo que pegaste 🔑. ⚠️ Ojo: **no parece una clave de Gemini** (empiezan por \`AIza…\`) ni de Groq (\`gsk_…\`). Si el chat no mejora, consíguela gratis en aistudio.google.com/apikey (botón "?" en Ajustes › IA).`,
-               `He desat el que has enganxat 🔑. ⚠️ Compte: **no sembla una clau de Gemini** (comencen per \`AIza…\`) ni de Groq (\`gsk_…\`). Si el xat no millora, aconsegueix-la gratis a aistudio.google.com/apikey (botó "?" a Ajustos › IA).`,
-               `Saved what you pasted 🔑. ⚠️ Note: **it doesn't look like a Gemini key** (they start with \`AIza…\`) or Groq (\`gsk_…\`). If the chat doesn't improve, get one free at aistudio.google.com/apikey ("?" button in Settings › AI).`);
+      window.ZUI?.redactFromChat?.(bare);
+      return L(`No he guardado eso 🔒. **No parece una clave de Gemini** (empiezan por \`AIza…\`) ni de Groq (\`gsk_…\`), y no guardo cadenas que no reconozca por si es otra contraseña tuya. Si es tu clave de IA, pégala en **Ajustes › IA de Zana**.`,
+               `No ho he desat 🔒. **No sembla una clau de Gemini** (comencen per \`AIza…\`) ni de Groq (\`gsk_…\`), i no deso cadenes que no reconegui per si és una altra contrasenya teva. Si és la teva clau d'IA, enganxa-la a **Ajustos › IA de la Zana**.`,
+               `I didn't save that 🔒. **It doesn't look like a Gemini key** (they start with \`AIza…\`) or a Groq one (\`gsk_…\`), and I don't store strings I can't recognise in case it's another password of yours. If it is your AI key, paste it in **Settings › Zana AI**.`);
     }
     const foods = S.detectFoods(text);
     const foodNames = foods.map(f=>window.ZDATA.FOODS[f]?.name).filter(Boolean);
@@ -401,6 +418,8 @@ window.ZMASCOT = (() => {
     const plan = S.activePlan();
     const kb = plan ? window.ZKB.KNOWLEDGE[plan.goal] : null;
     const lang = st.lang==="ca"?"catalán":st.lang==="en"?"inglés":"español";
+    // El modelo no necesita el nombre para calcular nada: se queda en el móvil.
+    const { name:_nombreFuera, ...perfilSinNombre } = plan?.profile || {};
     const sys = `Eres Zana, una zanahoria mascota simpática y experta en nutrición, cocina y entrenamiento. Responde en ${lang}, cercana y motivadora, con algún emoji. Sé breve salvo que te pidan detalle.
 TU TERRENO ES AMPLIO: alimentación y nutrición, cocina y recetas, la compra y el presupuesto, suplementación, hidratación, alcohol y comer fuera, entrenamiento y deporte, descanso y sueño, digestiones, energía y rendimiento, hábitos, motivación y constancia, y cómo el usuario se siente con su cuerpo y su plan. Si la pregunta se puede enfocar desde la comida, el movimiento o los hábitos, AYÚDALE DE VERDAD: no te escudes en que "no es tu tema" ni devuelvas la pregunta.
 Da respuestas concretas y aplicables (cantidades, gramos, ejemplos de platos, alternativas reales), no generalidades. Asume buena fe: si el usuario pregunta por un capricho, una cerveza, un cumpleaños o saltarse el plan, encájalo en su semana sin sermones ni culpa.
@@ -413,16 +432,17 @@ ${kb ? JSON.stringify(kb) : ""}
 ${plan?.profile?.bodyType ? "Tipo de cuerpo del usuario: "+JSON.stringify(window.ZKB.bodyTypeInfo(plan.profile.bodyType)) : ""}
 ${plan?.profile?.preferences ? "Gustos y comidas favoritas del usuario (tenlos en cuenta al aconsejar y proponer): "+plan.profile.preferences : ""}
 ${plan?.profile?.customDiet ? "Dieta personalizada que pidió el usuario: "+plan.profile.customDiet : ""}
-Datos del usuario: ${plan ? JSON.stringify({objetivo:plan.goal, ...plan.targets, perfil:plan.profile}) : "sin plan aún"}.
+Datos del usuario: ${plan ? JSON.stringify({objetivo:plan.goal, ...plan.targets, perfil:perfilSinNombre}) : "sin plan aún"}.
 Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y objetivo, ayúdale a ajustarlas de forma razonada (los ectomorfos suelen necesitar más para masa).`;
 
     if (st.aiKey && !st.aiKey.startsWith("gsk_")) {  // Gemini (AIza… / AQ.…): por formato de clave
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(st.aiKey)}`;
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
       // El historial ya incluye el mensaje actual como último elemento
-      let hist = (history||[]).slice(-12).map(m=>({ role: m.who==="me"?"user":"model", parts:[{text:m.text}] }));
-      if (!hist.length || hist[hist.length-1].role!=="user") hist.push({ role:"user", parts:[{text}] });
+      let hist = (history||[]).slice(-12).map(m=>({ role: m.who==="me"?"user":"model", parts:[{text:sinClaves(m.text, st.aiKey)}] }));
+      if (!hist.length || hist[hist.length-1].role!=="user") hist.push({ role:"user", parts:[{text:sinClaves(text, st.aiKey)}] });
       const body = { systemInstruction:{parts:[{text:sys}]}, contents:hist };
-      const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+      // La clave va en cabecera, no en la URL: las query strings acaban en logs.
+      const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":st.aiKey},body:JSON.stringify(body)});
       const j = await r.json();
       const txt = j?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (txt) return txt;
@@ -434,7 +454,7 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
         method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${st.aiKey}`},
         body:JSON.stringify({ model:"llama-3.3-70b-versatile", messages:[
           {role:"system",content:sys},
-          ...(history&&history.length ? history.slice(-12).map(m=>({role:m.who==="me"?"user":"assistant",content:m.text})) : [{role:"user",content:text}])
+          ...(history&&history.length ? history.slice(-12).map(m=>({role:m.who==="me"?"user":"assistant",content:sinClaves(m.text, st.aiKey)})) : [{role:"user",content:sinClaves(text, st.aiKey)}])
         ]})
       });
       const j = await r.json();
@@ -472,10 +492,10 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
     if(!m) return null;
     const mime=m[1], b64=m[2];
     const prompt = "Eres un lector de tiquets de supermercado. Extrae SOLO los alimentos y su precio en euros. Devuelve EXCLUSIVAMENTE un array JSON como [{\"producto\":\"nombre\",\"precio\":1.60}], sin texto adicional.";
-    if(st.aiProvider==="gemini" && st.aiKey){
-      const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(st.aiKey)}`;
+    if(st.aiKey && !st.aiKey.startsWith("gsk_")){  // Gemini por formato de clave, igual que el chat
+      const url="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
       const body={ contents:[{ role:"user", parts:[ {text:prompt}, {inline_data:{mime_type:mime, data:b64}} ] }] };
-      const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+      const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":st.aiKey},body:JSON.stringify(body)});
       const j=await r.json();
       const txt=j?.candidates?.[0]?.content?.parts?.[0]?.text||"";
       return parseJsonArray(txt);

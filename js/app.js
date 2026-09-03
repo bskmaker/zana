@@ -933,9 +933,14 @@ window.ZAPP = (() => {
       const items=await M.extractTicket(dataUrl);
       if(!items||!items.length){ U.toast("No pude leer el tiquet, prueba otra foto","😕"); return; }
       let updated=0;
+      // La respuesta viene de un modelo leyendo una foto: no es de fiar.
+      // Solo se aceptan precios finitos y en un rango plausible de supermercado.
       items.forEach(it=>{
         const fids=S.detectFoods(it.producto||"");
-        if(fids.length && it.precio){ S.setProduct(fids[0], null, +it.precio); updated++; }
+        const precio=Number(it.precio);
+        if(fids.length && Number.isFinite(precio) && precio>0 && precio<100){
+          S.setProduct(fids[0], null, precio); updated++;
+        }
       });
       S.buildShopping(S.get().shopping?.weeks||1);
       U.toast(`Tiquet leído: ${updated} precios actualizados ✅`,"📷");
@@ -1170,9 +1175,17 @@ window.ZAPP = (() => {
         </select>
         <div class="field" id="aiKeyBox" style="margin-top:14px;${st.aiProvider==="local"?'display:none':''}">
           <label>Tu clave API</label>
-          <input class="input" id="aiKey" placeholder="Pega aquí tu API key" value="${esc(st.aiKey)}"/>
-          <div class="hint">${st.aiKey?"✅ Clave guardada.":"Cada persona usa su propia clave gratuita. Pulsa el <b>?</b> para conseguirla."}</div>
+          <div class="flex" style="gap:8px">
+            <input class="input grow" id="aiKey" type="password" autocomplete="off" spellcheck="false"
+                   placeholder="Pega aquí tu API key" value="${esc(st.aiKey)}"/>
+            <button class="btn sm ghost" data-verkey type="button" style="flex:0 0 auto">Ver</button>
+          </div>
+          <div class="hint">${st.aiKey?`✅ Clave guardada (····${esc(st.aiKey.slice(-4))}).`:"Cada persona usa su propia clave gratuita. Pulsa el <b>?</b> para conseguirla."}</div>
         </div>
+        <div class="pill-note" style="margin-top:10px">${ZL(
+          "🔒 <b>Qué sale de tu móvil:</b> con Gemini o Groq activados, tus datos del plan (edad, sexo, peso, altura, objetivo, intolerancias) y tus mensajes se envían a ese proveedor para generar la respuesta. Tu nombre no se envía. Las fotos de tiquets se mandan enteras. En modo <b>Zana local</b> no sale nada del móvil.",
+          "🔒 <b>Què surt del teu mòbil:</b> amb Gemini o Groq activats, les teves dades del pla (edat, sexe, pes, alçada, objectiu, intoleràncies) i els teus missatges s'envien a aquest proveïdor per generar la resposta. El teu nom no s'envia. Les fotos de tiquets s'envien senceres. En mode <b>Zana local</b> no surt res del mòbil.",
+          "🔒 <b>What leaves your phone:</b> with Gemini or Groq enabled, your plan data (age, sex, weight, height, goal, intolerances) and your messages are sent to that provider to generate the reply. Your name is not sent. Receipt photos are sent in full. In <b>Zana local</b> mode nothing leaves your phone.")}</div>
         <button class="btn primary mt" data-saveai>Guardar IA</button>
       </div>
 
@@ -1238,6 +1251,13 @@ window.ZAPP = (() => {
 
     app.querySelector("#aiProvider").onchange=e=>{
       app.querySelector("#aiKeyBox").style.display = e.target.value==="local"?"none":"block";
+    };
+    const verKeyBtn=app.querySelector("[data-verkey]");
+    if(verKeyBtn) verKeyBtn.onclick=()=>{
+      const campo=app.querySelector("#aiKey"); if(!campo) return;
+      const oculto = campo.type==="password";
+      campo.type = oculto ? "text" : "password";
+      verKeyBtn.textContent = oculto ? "Ocultar" : "Ver";
     };
     app.querySelector("[data-saveai]").onclick=()=>{
       st.aiProvider=app.querySelector("#aiProvider").value;
@@ -1318,7 +1338,11 @@ window.ZAPP = (() => {
         "Para responderte de verdad a cualquier pregunta necesito tu clave gratuita de Google Gemini (es gratis y tarda 1 minuto). Sin ella funciono en modo básico.",
         "Per respondre't de veritat a qualsevol pregunta necessito la teva clau gratuïta de Google Gemini (és gratis i triga 1 minut). Sense ella funciono en mode bàsic.",
         "To really answer any question I need your free Google Gemini key (it's free and takes 1 minute). Without it I run in basic mode.")}</p>
-      <div class="field mt" style="margin-bottom:8px"><input class="input" id="kpKey" placeholder="AIza… o AQ…" value="${esc(st.aiKey||"")}"/></div>
+      <div class="field mt" style="margin-bottom:8px"><input class="input" id="kpKey" type="password" autocomplete="off" spellcheck="false" placeholder="AIza… o AQ…" value="${esc(st.aiKey||"")}"/></div>
+      <div class="pill-note" style="margin-bottom:10px;text-align:left">${ZL(
+        "🔒 Con la IA activada, tus datos del plan y tus mensajes se envían a Google para generar la respuesta. Tu nombre no. Sin clave, Zana funciona entera dentro del móvil.",
+        "🔒 Amb la IA activada, les teves dades del pla i els teus missatges s'envien a Google per generar la resposta. El teu nom no. Sense clau, la Zana funciona sencera dins del mòbil.",
+        "🔒 With AI enabled, your plan data and messages are sent to Google to generate the reply. Your name is not. Without a key, Zana runs entirely on your phone.")}</div>
       <button class="btn primary" data-save>${ZL("Guardar clave","Desar clau","Save key")}</button>
       <button class="btn ghost mt" data-help>${ZL("¿Cómo consigo una? (gratis)","Com n'aconsegueixo una? (gratis)","How do I get one? (free)")}</button>
       <button class="btn ghost mt" data-skip>${ZL("Seguir sin clave (modo básico)","Continuar sense clau (mode bàsic)","Continue without key (basic mode)")}</button>
