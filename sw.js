@@ -1,5 +1,5 @@
 /* ZANA · Service Worker (offline cache) */
-const CACHE = "zana-v27";
+const CACHE = "zana-v28";
 // Precache: solo el esqueleto de la app. js/photos.js (2,7 MB de imagenes)
 // queda fuera a proposito: addAll() es atomico y, con mala cobertura, esa
 // descarga hacia fallar la instalacion entera del service worker y la app se
@@ -7,18 +7,23 @@ const CACHE = "zana-v27";
 const ASSETS = [
   "index.html",
   "manifest.webmanifest",
-  "css/app.css?v=27",
-  "js/data.js?v=27",
-  "js/knowledge.js?v=27",
-  "js/i18n.js?v=27",
-  "js/engine.js?v=27",
-  "js/store.js?v=27",
-  "js/mascot.js?v=27",
-  "js/ui.js?v=27",
-  "js/app.js?v=27",
-  "js/sw-register.js?v=27",
+  "css/app.css?v=28",
+  "js/data.js?v=28",
+  "js/knowledge.js?v=28",
+  "js/i18n.js?v=28",
+  "js/engine.js?v=28",
+  "js/store.js?v=28",
+  "js/mascot.js?v=28",
+  "js/ui.js?v=28",
+  "js/app.js?v=28",
+  "js/frame-guard.js?v=28",
+  "js/sw-register.js?v=28",
   "assets/icon.svg",
   "assets/icon-maskable.svg",
+  "assets/icon-192.png",
+  "assets/icon-512.png",
+  "assets/icon-maskable-192.png",
+  "assets/icon-maskable-512.png",
 ];
 
 self.addEventListener("install", e => {

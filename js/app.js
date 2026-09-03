@@ -5,7 +5,7 @@ window.ZAPP = (() => {
   const S = window.ZSTORE, E = window.ZENGINE, D = window.ZDATA, U = window.ZUI, M = window.ZMASCOT;
   const app = document.getElementById("app");
   const esc = U.esc;
-  const APP_VER = "v27";  // súbelo en cada despliegue (junto con index.html/sw.js)
+  const APP_VER = "v28";  // súbelo en cada despliegue (junto con index.html/sw.js)
 
   let route = { name:"home", params:{} };
   let prevRoute = { name:"home", params:{} };
@@ -20,6 +20,17 @@ window.ZAPP = (() => {
   function goBackFrom(){ // vuelve a la pantalla anterior real
     const p = prevRoute && prevRoute.name && prevRoute.name!=="recipe" ? prevRoute : { name:"home", params:{} };
     go(p.name, p.params);
+  }
+
+  // Accesos directos del icono en Android (manifest › shortcuts): index.html?go=super
+  // Lista blanca estricta: el valor nunca se interpola en HTML ni se usa para
+  // otra cosa que elegir una pantalla ya existente.
+  const ATAJOS_VALIDOS = ["recipes","super","exercise","calendar","settings","home"];
+  function rutaInicialDeAtajo(){
+    try{
+      const go = new URLSearchParams(window.location.search).get("go");
+      return ATAJOS_VALIDOS.includes(go) ? go : null;
+    }catch{ return null; }
   }
 
   function render() {
@@ -295,8 +306,27 @@ window.ZAPP = (() => {
       const key=st.dataset.stepper, min=+st.dataset.min, max=+st.dataset.max, step=+st.dataset.step;
       const valEl=st.querySelector("[data-val]");
       const upd=d=>{ ob[key]=Math.max(min,Math.min(max,ob[key]+d)); valEl.textContent=ob[key]; };
-      st.querySelector("[data-dec]").onclick=()=>upd(-step);
-      st.querySelector("[data-inc]").onclick=()=>upd(step);
+      // En movil, ir de 70 a 82 kg de uno en uno son doce toques: al mantener
+      // pulsado avanza solo, y acelera cuanto mas rato se sostiene.
+      const mantener=(btn,signo)=>{
+        let t1=null, t2=null;
+        const parar=()=>{ clearTimeout(t1); clearInterval(t2); t1=t2=null; };
+        btn.addEventListener("pointerdown", e=>{
+          e.preventDefault();
+          upd(signo*step);
+          t1=setTimeout(()=>{
+            let ritmo=120, transcurrido=0;
+            t2=setInterval(()=>{
+              upd(signo*step);
+              transcurrido+=ritmo;
+              if(transcurrido>1200 && ritmo>40){ ritmo=40; clearInterval(t2); t2=setInterval(()=>upd(signo*step),ritmo); }
+            }, ritmo);
+          }, 400);
+        });
+        ["pointerup","pointerleave","pointercancel"].forEach(ev=>btn.addEventListener(ev,parar));
+      };
+      mantener(st.querySelector("[data-dec]"), -1);
+      mantener(st.querySelector("[data-inc]"), +1);
     });
   }
 
@@ -1411,13 +1441,17 @@ window.ZAPP = (() => {
      BOOT
      ======================================================================= */
   function boot(){
+    if (window.__zanaFramed) return;   // embebida en un iframe: no se arranca
     // splash mascota
     const sm=document.getElementById("splashMascot"); if(sm) sm.innerHTML=M.svg("happy");
     setTimeout(()=>{
       const sp=document.getElementById("splash");
       sp.classList.add("out");
       setTimeout(()=> sp.remove(), 500);
-      render();
+      // Si se ha entrado por un acceso directo del icono, abrir esa pantalla
+      // (solo si ya hay plan; si no, manda el onboarding).
+      const atajo = rutaInicialDeAtajo();
+      if (atajo && S.activePlan()) go(atajo); else render();
       if(S.get().settings.notifications) scheduleMealNotifs();
     }, 1100);
   }
