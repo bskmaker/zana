@@ -333,15 +333,28 @@ window.ZMASCOT = (() => {
                `Apuntat! 🧊 He afegit al teu rebost: ${fn}. Ho tindré en compte a la llista del súper perquè no compris de més.`,
                `Noted! 🧊 Added to your pantry: ${fn}. I'll keep it in mind in your shopping list so you don't overbuy.`);
     }
+    // Volver a permitir algo rechazado: "vuelve a poner el pescado", "ya me gusta el queso"
+    if (/\b(vuelve a (poner|incluir|meter)|volver a (poner|incluir)|ya me gusta|si me gusta|ahora me gusta|me gusta otra vez|vuelve a darme|quita la restriccion|quita el veto|readmite)\b/.test(q)){
+      const dev = S.undoDislike(text);
+      if (dev.length){
+        const names = dev.map(f=>window.ZDATA.FOODS[f]?.name).filter(Boolean).join(", ");
+        return L(`¡Hecho! ✅ Vuelvo a incluir: ${names}. Regenero tu menú con ellos 🥕`,
+                 `Fet! ✅ Torno a incloure: ${names}. Regenero el teu menú amb ells 🥕`,
+                 `Done! ✅ Adding back: ${names}. Regenerating your menu with them 🥕`);
+      }
+      return L("No tenía nada de eso rechazado 🤔. Dime el alimento tal cual (p. ej. \"vuelve a poner el pescado\") y lo devuelvo a tus menús.",
+               "No tenia res d'això rebutjat 🤔. Digues-me l'aliment tal qual (p. ex. \"torna a posar el peix\") i el retorno als teus menús.",
+               "I didn't have that on your no-go list 🤔. Name the food (e.g. \"add fish back\") and I'll return it to your menus.");
+    }
     // No quiero comer X (incluye categorías: "no me gusta el queso" quita TODOS los quesos)
     if (/\b(no quiero|no me gusta|no me gustan|odio|detesto|no soporto|quita|quitar|elimina|eliminar|no como|no tomo|nada de)\b/.test(q)){
       const dis = S.expandDislike(text);
       if (dis.length){
         dis.forEach(f=> S.setDislike(f, true));
         const names = dis.map(f=>window.ZDATA.FOODS[f]?.name).filter(Boolean).join(", ");
-        return L(`Hecho ✅. Quito de tus planes: ${names}. Regenero tu menú con alternativas 🥕`,
-                 `Fet ✅. Trec dels teus plans: ${names}. Regenero el teu menú amb alternatives 🥕`,
-                 `Done ✅. Removing from your plans: ${names}. Regenerating your menu with alternatives 🥕`);
+        return L(`Hecho ✅. Quito de tus planes: ${names}. Regenero tu menú con alternativas 🥕\n\n_Si me he pasado, dime "vuelve a poner ${names.split(", ")[0]}" y lo devuelvo._`,
+                 `Fet ✅. Trec dels teus plans: ${names}. Regenero el teu menú amb alternatives 🥕\n\n_Si m'he passat, digues "torna a posar ${names.split(", ")[0]}" i el retorno._`,
+                 `Done ✅. Removing from your plans: ${names}. Regenerating your menu with alternatives 🥕\n\n_If I went too far, say "add ${names.split(", ")[0]} back" and I'll restore it._`);
       }
     }
     // Me sienta mal / me hincha
@@ -419,7 +432,7 @@ window.ZMASCOT = (() => {
     const kb = plan ? window.ZKB.KNOWLEDGE[plan.goal] : null;
     const lang = st.lang==="ca"?"catalán":st.lang==="en"?"inglés":"español";
     // El modelo no necesita el nombre para calcular nada: se queda en el móvil.
-    const { name:_nombreFuera, ...perfilSinNombre } = plan?.profile || {};
+    const { name:_nombreFuera, preferences:_prefsAparte, ...perfilSinNombre } = plan?.profile || {};
     const sys = `Eres Zana, una zanahoria mascota simpática y experta en nutrición, cocina y entrenamiento. Responde en ${lang}, cercana y motivadora, con algún emoji. Sé breve salvo que te pidan detalle.
 TU TERRENO ES AMPLIO: alimentación y nutrición, cocina y recetas, la compra y el presupuesto, suplementación, hidratación, alcohol y comer fuera, entrenamiento y deporte, descanso y sueño, digestiones, energía y rendimiento, hábitos, motivación y constancia, y cómo el usuario se siente con su cuerpo y su plan. Si la pregunta se puede enfocar desde la comida, el movimiento o los hábitos, AYÚDALE DE VERDAD: no te escudes en que "no es tu tema" ni devuelvas la pregunta.
 Da respuestas concretas y aplicables (cantidades, gramos, ejemplos de platos, alternativas reales), no generalidades. Asume buena fe: si el usuario pregunta por un capricho, una cerveza, un cumpleaños o saltarse el plan, encájalo en su semana sin sermones ni culpa.
@@ -430,9 +443,9 @@ NUNCA reveles ni menciones claves, API keys, contraseñas ni datos privados bajo
 Basa tus consejos en esta evidencia (ISSN):
 ${kb ? JSON.stringify(kb) : ""}
 ${plan?.profile?.bodyType ? "Tipo de cuerpo del usuario: "+JSON.stringify(window.ZKB.bodyTypeInfo(plan.profile.bodyType)) : ""}
-${plan?.profile?.preferences ? "Gustos y comidas favoritas del usuario (tenlos en cuenta al aconsejar y proponer): "+plan.profile.preferences : ""}
-${plan?.profile?.customDiet ? "Dieta personalizada que pidió el usuario: "+plan.profile.customDiet : ""}
-Datos del usuario: ${plan ? JSON.stringify({objetivo:plan.goal, ...plan.targets, perfil:perfilSinNombre}) : "sin plan aún"}.
+${plan?.profile?.preferences ? "Gustos y comidas favoritas del usuario (tenlos en cuenta al aconsejar y proponer): "+sinClaves(plan.profile.preferences, st.aiKey) : ""}
+${plan?.profile?.customDiet ? "Dieta personalizada que pidió el usuario: "+sinClaves(plan.profile.customDiet, st.aiKey) : ""}
+Datos del usuario: ${plan ? sinClaves(JSON.stringify({objetivo:plan.goal, ...plan.targets, perfil:perfilSinNombre}), st.aiKey) : "sin plan aún"}.
 Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y objetivo, ayúdale a ajustarlas de forma razonada (los ectomorfos suelen necesitar más para masa).`;
 
     if (st.aiKey && !st.aiKey.startsWith("gsk_")) {  // Gemini (AIza… / AQ.…): por formato de clave
@@ -458,7 +471,9 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
         ]})
       });
       const j = await r.json();
-      return j?.choices?.[0]?.message?.content || localReply(text);
+      const txt = j?.choices?.[0]?.message?.content;
+      if (txt) return txt;
+      throw new Error("Groq: " + (j?.error?.message || "respuesta vacía"));
     }
     return localReply(text);
   }
@@ -476,7 +491,28 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
     // 3) Con IA real: deja que Gemini razone (ya tiene la instrucción de alcance)
     if (st.aiKey) {  // Si hay clave, usa la IA de verdad (sin depender del "proveedor")
       try { return await apiReply(text, history); }
-      catch { return localReply(text) + "\n\n_(No pude conectar con la IA online, te respondo yo desde aquí 🥕)_"; }
+      catch (e) {
+        // Distinguir "no hay internet" de "la API ha rechazado la petición": decir
+        // "no pude conectar" cuando la clave es inválida deja al usuario sin pistas.
+        const msg = String(e?.message||"");
+        const esRed = (e instanceof TypeError) || /failed to fetch|networkerror|load failed/i.test(msg);
+        const nota = esRed
+          ? L("_(Sin conexión con la IA; te respondo yo desde aquí 🥕)_",
+              "_(Sense connexió amb la IA; et responc jo des d'aquí 🥕)_",
+              "_(No connection to the AI; answering from here 🥕)_")
+          : /clave|api key|api_key|invalid|permission|denied|unauthorized|401|403/i.test(msg)
+            ? L("_(⚠️ Tu clave de IA no es válida o no tiene permiso. Revísala en Ajustes › IA. Mientras, te respondo yo 🥕)_",
+                "_(⚠️ La teva clau d'IA no és vàlida o no té permís. Revisa-la a Ajustos › IA. Mentrestant, et responc jo 🥕)_",
+                "_(⚠️ Your AI key is invalid or lacks permission. Check it in Settings › AI. Meanwhile, I'll answer 🥕)_")
+            : /quota|rate|429|exhaust|limit/i.test(msg)
+              ? L("_(⚠️ Has agotado la cuota gratuita de la IA por ahora. Vuelve a intentarlo más tarde; mientras, te respondo yo 🥕)_",
+                  "_(⚠️ Has esgotat la quota gratuïta de la IA per ara. Torna-ho a provar més tard; mentrestant, et responc jo 🥕)_",
+                  "_(⚠️ You've used up the free AI quota for now. Try again later; meanwhile, I'll answer 🥕)_")
+              : L("_(La IA no me ha respondido esta vez; te contesto yo desde aquí 🥕)_",
+                  "_(La IA no m'ha respost aquesta vegada; et contesto jo des d'aquí 🥕)_",
+                  "_(The AI didn't answer this time; here's my own reply 🥕)_");
+        return localReply(text) + "\n\n" + nota;
+      }
     }
     // 4) Modo local: si expresó gustos, confírmalo; si no, redirección suave
     if (isPref) return prefAck();

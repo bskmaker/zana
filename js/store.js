@@ -434,10 +434,28 @@ window.ZSTORE = (() => {
     regeneratePlan(p.id);
     save();
   }
+  // Vuelve a permitir alimentos rechazados (incluye grupos: "vuelve a poner el pescado").
+  // Sin esto, un rechazo por categoria borraba hasta 14 alimentos y solo se podia
+  // deshacer volviendo a pasar por el onboarding entero.
+  function undoDislike(text){
+    const p = activePlan(); if(!p) return [];
+    const ids = expandDislike(text);
+    const set = new Set(p.profile.dislikes||[]);
+    const devueltos = ids.filter(i=>set.has(i));
+    if(!devueltos.length) return [];
+    devueltos.forEach(i=>set.delete(i));
+    p.profile.dislikes = [...set];
+    regeneratePlan(p.id);
+    save();
+    return devueltos;
+  }
+
   // Guarda gustos/preferencias del usuario (texto libre) para que la IA los recuerde
   function addPreference(text){
     const p = activePlan(); if(!p || !text) return;
-    const t = text.trim();
+    // Las preferencias se envian al proveedor de IA en cada mensaje: si algo con
+    // pinta de clave llega hasta aqui, no se guarda tal cual.
+    const t = text.trim().replace(/(AIza[0-9A-Za-z_\-]{20,}|AQ\.[0-9A-Za-z_\-]{20,}|gsk_[0-9A-Za-z]{20,})/g, "[oculto]");
     const cur = p.profile.preferences || "";
     if (cur.toLowerCase().includes(t.toLowerCase())) return; // ya está
     p.profile.preferences = (cur ? cur + " · " : "") + t;
@@ -457,7 +475,7 @@ window.ZSTORE = (() => {
     dayExercises, exProgress, toggleExerciseDone, exercisesThisWeek,
     toggleFrozen, isFrozen, defrostAlerts,
     logIntolerance, analyzeIntolerances, suppressFood,
-    addPantry, pantryKnown, setDislike, setMeals, addPreference, detectFoods, expandDislike,
+    addPantry, pantryKnown, setDislike, setMeals, addPreference, detectFoods, expandDislike, undoDislike,
     setProduct, foodPrice, foodBrands,
     reset,
   };
