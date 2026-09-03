@@ -6,7 +6,9 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <g transform="translate(256 262) rotate(18)">
+  <!-- La zanahoria ocupa el 95% del cuadrado: escala calculada sobre su caja
+       real ya rotada (299,6 x 461,4 u), no a ojo. -->
+  <g transform="translate(239.6 292.8) rotate(18) scale(1.0541)">
     <!-- Hojas -->
     <g fill="#2FBF71">
       <path d="M-6 -150 C-30 -205 -66 -216 -84 -206 C-70 -178 -42 -158 -8 -150 Z"/>
