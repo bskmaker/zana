@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#F26419" />
   <meta name="description" content="Zana — Tu nutrición inteligente con IA. Planes de comida personalizados, recetas, lista de la compra, gastos y gimnasio." />
   <title>Zana · Nutrición con IA</title>
@@ -10,11 +10,15 @@
        <meta>; para protegerse de embebido en iframes hace falta la cabecera
        HTTP, que GitHub Pages no permite configurar. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://image.pollinations.ai; connect-src 'self' https://generativelanguage.googleapis.com https://api.groq.com; font-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'none'" />
-  <meta name="referrer" content="no-referrer" />
+  <!-- 'origin' envia solo https://<dominio>/ (nunca la ruta ni parametros).
+       Hace falta para poder restringir la clave de Gemini por referente HTTP en
+       Google Cloud Console; con 'no-referrer' Google rechazaria las llamadas. -->
+  <meta name="referrer" content="origin" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
   <link rel="apple-touch-icon" href="assets/icon.svg" />
-  <link rel="stylesheet" href="css/app.css?v=27" />
+  <script src="js/frame-guard.js?v=28"></script>
+  <link rel="stylesheet" href="css/app.css?v=28" />
 </head>
 <body>
   <!-- Splash / carga -->
@@ -42,15 +46,15 @@
   <!-- Contenedor de notificaciones toast -->
   <div id="toasts" class="toasts"></div>
 
-  <script src="js/data.js?v=27"></script>
-  <script src="js/photos.js?v=27"></script>
-  <script src="js/knowledge.js?v=27"></script>
-  <script src="js/i18n.js?v=27"></script>
-  <script src="js/engine.js?v=27"></script>
-  <script src="js/store.js?v=27"></script>
-  <script src="js/mascot.js?v=27"></script>
-  <script src="js/ui.js?v=27"></script>
-  <script src="js/app.js?v=27"></script>
-  <script src="js/sw-register.js?v=27"></script>
+  <script src="js/data.js?v=28"></script>
+  <script src="js/photos.js?v=28"></script>
+  <script src="js/knowledge.js?v=28"></script>
+  <script src="js/i18n.js?v=28"></script>
+  <script src="js/engine.js?v=28"></script>
+  <script src="js/store.js?v=28"></script>
+  <script src="js/mascot.js?v=28"></script>
+  <script src="js/ui.js?v=28"></script>
+  <script src="js/app.js?v=28"></script>
+  <script src="js/sw-register.js?v=28"></script>
 </body>
 </html>

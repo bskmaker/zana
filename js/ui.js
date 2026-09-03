@@ -114,11 +114,16 @@ window.ZUI = (() => {
   }
 
   // --- Tema / idioma -------------------------------------------------------
+  // Color de la barra de estado de Android por tema. Sin esto, con el tema
+  // oscuro la barra seguia naranja y la app se veia partida en dos.
+  const THEME_BAR = { light:"#FFF8F0", dark:"#38343A", orange:"#FF7A1A" };
   function applyTheme(){
     const st = S.get().settings;
     const t = ["dark","orange"].includes(st.theme) ? st.theme : "light";
     document.documentElement.setAttribute("data-theme", t);
     document.documentElement.setAttribute("lang", st.lang||"es");
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", THEME_BAR[t] || THEME_BAR.light);
   }
 
   // --- Chat con la zanahoria ----------------------------------------------
@@ -138,7 +143,8 @@ window.ZUI = (() => {
         <div class="chat-scroll" id="chatScroll"></div>
         <div class="chat-suggest" id="chatSuggest"></div>
         <div class="chat-input">
-          <input id="chatInput" placeholder="Escríbele a Zana..." autocomplete="off"/>
+          <input id="chatInput" placeholder="Escríbele a Zana..." autocomplete="off"
+                 enterkeyhint="send" autocapitalize="sentences" autocorrect="on"/>
           <button data-send>➤</button>
         </div>
       </div>`;
