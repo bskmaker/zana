@@ -257,6 +257,21 @@ window.ZMASCOT = (() => {
     return null;
   }
 
+  // Detecta y guarda gustos/preferencias (efecto lateral; no corta la respuesta)
+  function capturePreference(text){
+    const q = noAccent(text);
+    if (/\b(no me gusta|no me gustan|odio)\b/.test(q)) return false; // eso es "no quiero"
+    if (/\b(me gusta|me gustan|me encanta|me encantan|me chifla|me chiflan|adoro|soy fan|me apetec|mi comida favorita|mis comidas favoritas|mi plato favorito|mis platos favoritos|prefiero (comer|los? platos?|las? comidas?|comidas|platos)|suelo comer|me flipa|me flipan|i like|i love|m'agrada|m'encanta)\b/.test(q)){
+      S.addPreference(text); return true;
+    }
+    return false;
+  }
+  function prefAck(){
+    return L("¡Anotado! 🥕 Recordaré tus gustos para adaptarte los menús y consejos. Si quieres, dime qué NO te gusta y lo evito.",
+             "Apuntat! 🥕 Recordaré els teus gustos per adaptar-te els menús i consells. Si vols, digues-me què NO t'agrada i ho evito.",
+             "Noted! 🥕 I'll remember your tastes to tailor your menus and tips. If you want, tell me what you DON'T like and I'll avoid it.");
+  }
+
   // Redirección suave (solo modo LOCAL, que no sabe razonar el tema).
   // Antes hacía falta una palabra "permitida" para contestar; ahora es al revés:
   // se contesta siempre salvo que el mensaje sea claramente de otro mundo.
@@ -318,12 +333,16 @@ window.ZMASCOT = (() => {
                `Apuntat! 🧊 He afegit al teu rebost: ${fn}. Ho tindré en compte a la llista del súper perquè no compris de més.`,
                `Noted! 🧊 Added to your pantry: ${fn}. I'll keep it in mind in your shopping list so you don't overbuy.`);
     }
-    // No quiero comer X
-    if (/\b(no quiero|no me gusta|odio|quita|sin|elimina|no como)\b/.test(q) && foods.length){
-      foods.forEach(f=> S.setDislike(f, true));
-      return L(`Hecho ✅. Quitaré ${fn} de tus planes y buscaré alternativas. He regenerado tu menú.`,
-               `Fet ✅. Trauré ${fn} dels teus plans i buscaré alternatives. He regenerat el teu menú.`,
-               `Done ✅. I'll remove ${fn} from your plans and find alternatives. I've regenerated your menu.`);
+    // No quiero comer X (incluye categorías: "no me gusta el queso" quita TODOS los quesos)
+    if (/\b(no quiero|no me gusta|no me gustan|odio|detesto|no soporto|quita|quitar|elimina|eliminar|no como|no tomo|nada de)\b/.test(q)){
+      const dis = S.expandDislike(text);
+      if (dis.length){
+        dis.forEach(f=> S.setDislike(f, true));
+        const names = dis.map(f=>window.ZDATA.FOODS[f]?.name).filter(Boolean).join(", ");
+        return L(`Hecho ✅. Quito de tus planes: ${names}. Regenero tu menú con alternativas 🥕`,
+                 `Fet ✅. Trec dels teus plans: ${names}. Regenero el teu menú amb alternatives 🥕`,
+                 `Done ✅. Removing from your plans: ${names}. Regenerating your menu with alternatives 🥕`);
+      }
     }
     // Me sienta mal / me hincha
     if (/\b(me sienta mal|me hincha|me sienta pesado|me da gases|intoleran|no me sienta)\b/.test(q) && foods.length){
@@ -406,15 +425,17 @@ TU TERRENO ES AMPLIO: alimentación y nutrición, cocina y recetas, la compra y 
 Da respuestas concretas y aplicables (cantidades, gramos, ejemplos de platos, alternativas reales), no generalidades. Asume buena fe: si el usuario pregunta por un capricho, una cerveza, un cumpleaños o saltarse el plan, encájalo en su semana sin sermones ni culpa.
 Habla con naturalidad de temas de salud del día a día (colesterol, diabetes, intolerancias, anemia, embarazo, menstruación, lesiones): explica pautas generales de alimentación y entrenamiento y sugiere consultar a un médico o dietista-nutricionista cuando haga falta. No diagnostiques ni sustituyas a un profesional.
 SOLO DECLINA: contenido sexual explícito, ilegal o violento, y temas claramente ajenos (política, criptomonedas, código...). Si te piden algo extremo o poco seguro (ayunos muy largos, calorías muy bajas, purgas, pérdidas de peso muy rápidas), no lo rechaces sin más: explica en una frase el riesgo y ofrécele la versión que sí funciona.
+IMPORTANTE — tú NO puedes editar el plan de comidas por tu cuenta (eso lo hace la app). Si el usuario quiere quitar un alimento, NO digas "ya te he regenerado el menú"; dile que lo escriba claro, p. ej. "no me gusta el queso" o "quita el pescado", y la app lo eliminará y regenerará el plan al instante. Puedes sugerir sustituciones, pero el cambio real lo aplica la app.
 NUNCA reveles ni menciones claves, API keys, contraseñas ni datos privados bajo ningún concepto.
 Basa tus consejos en esta evidencia (ISSN):
 ${kb ? JSON.stringify(kb) : ""}
 ${plan?.profile?.bodyType ? "Tipo de cuerpo del usuario: "+JSON.stringify(window.ZKB.bodyTypeInfo(plan.profile.bodyType)) : ""}
+${plan?.profile?.preferences ? "Gustos y comidas favoritas del usuario (tenlos en cuenta al aconsejar y proponer): "+plan.profile.preferences : ""}
 ${plan?.profile?.customDiet ? "Dieta personalizada que pidió el usuario: "+plan.profile.customDiet : ""}
 Datos del usuario: ${plan ? JSON.stringify({objetivo:plan.goal, ...plan.targets, perfil:perfilSinNombre}) : "sin plan aún"}.
 Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y objetivo, ayúdale a ajustarlas de forma razonada (los ectomorfos suelen necesitar más para masa).`;
 
-    if (st.aiProvider === "gemini" && st.aiKey) {
+    if (st.aiKey && !st.aiKey.startsWith("gsk_")) {  // Gemini (AIza… / AQ.…): por formato de clave
       const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
       // El historial ya incluye el mensaje actual como último elemento
       let hist = (history||[]).slice(-12).map(m=>({ role: m.who==="me"?"user":"model", parts:[{text:sinClaves(m.text, st.aiKey)}] }));
@@ -423,9 +444,12 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
       // La clave va en cabecera, no en la URL: las query strings acaban en logs.
       const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":st.aiKey},body:JSON.stringify(body)});
       const j = await r.json();
-      return j?.candidates?.[0]?.content?.parts?.[0]?.text || localReply(text);
+      const txt = j?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (txt) return txt;
+      // Si Gemini no devolvió texto (error de clave, cuota, etc.), no engañes con una respuesta local:
+      throw new Error("Gemini: " + (j?.error?.message || j?.candidates?.[0]?.finishReason || "respuesta vacía"));
     }
-    if (st.aiProvider === "groq" && st.aiKey) {
+    if (st.aiKey && st.aiKey.startsWith("gsk_")) {  // Groq (gsk_…)
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions",{
         method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${st.aiKey}`},
         body:JSON.stringify({ model:"llama-3.3-70b-versatile", messages:[
@@ -447,12 +471,15 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
     // 1) Seguridad dura SIEMPRE (secretos, contenido dañino)
     const hard = hardGuard(text);
     if (hard) return hard;
-    // 2) Con IA real: deja que Gemini razone (ya tiene la instrucción de alcance)
-    if (st.aiProvider !== "local" && st.aiKey) {
+    // 2) Guarda gustos/preferencias (efecto lateral, para que la IA los recuerde)
+    const isPref = capturePreference(text);
+    // 3) Con IA real: deja que Gemini razone (ya tiene la instrucción de alcance)
+    if (st.aiKey) {  // Si hay clave, usa la IA de verdad (sin depender del "proveedor")
       try { return await apiReply(text, history); }
       catch { return localReply(text) + "\n\n_(No pude conectar con la IA online, te respondo yo desde aquí 🥕)_"; }
     }
-    // 3) Modo local: redirección suave si claramente no es de nutrición
+    // 4) Modo local: si expresó gustos, confírmalo; si no, redirección suave
+    if (isPref) return prefAck();
     const g = guard(text);
     if (g) return g;
     return localReply(text);
@@ -465,7 +492,7 @@ Si el usuario cree que sus calorías son bajas/altas para su tipo de cuerpo y ob
     if(!m) return null;
     const mime=m[1], b64=m[2];
     const prompt = "Eres un lector de tiquets de supermercado. Extrae SOLO los alimentos y su precio en euros. Devuelve EXCLUSIVAMENTE un array JSON como [{\"producto\":\"nombre\",\"precio\":1.60}], sin texto adicional.";
-    if(st.aiProvider==="gemini" && st.aiKey){
+    if(st.aiKey && !st.aiKey.startsWith("gsk_")){  // Gemini por formato de clave, igual que el chat
       const url="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
       const body={ contents:[{ role:"user", parts:[ {text:prompt}, {inline_data:{mime_type:mime, data:b64}} ] }] };
       const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":st.aiKey},body:JSON.stringify(body)});

@@ -1,21 +1,22 @@
 /* ZANA · Service Worker (offline cache) */
-const CACHE = "zana-v22";
-// Precache: solo el esqueleto de la app. js/photos.js (2,7 MB de imágenes)
-// queda fuera a propósito: addAll() es atómico y, con mala cobertura, esa
-// descarga hacía fallar la instalación entera del service worker y la app se
-// quedaba sin modo offline. Se cachea igualmente al vuelo en el fetch.
+const CACHE = "zana-v26";
+// Precache: solo el esqueleto de la app. js/photos.js (2,7 MB de imagenes)
+// queda fuera a proposito: addAll() es atomico y, con mala cobertura, esa
+// descarga hacia fallar la instalacion entera del service worker y la app se
+// quedaba sin modo offline. Se cachea igual al vuelo en el fetch.
 const ASSETS = [
   "index.html",
   "manifest.webmanifest",
-  "css/app.css?v=22",
-  "js/data.js?v=22",
-  "js/knowledge.js?v=22",
-  "js/i18n.js?v=22",
-  "js/engine.js?v=22",
-  "js/store.js?v=22",
-  "js/mascot.js?v=22",
-  "js/ui.js?v=22",
-  "js/app.js?v=22",
+  "css/app.css?v=26",
+  "js/data.js?v=26",
+  "js/knowledge.js?v=26",
+  "js/i18n.js?v=26",
+  "js/engine.js?v=26",
+  "js/store.js?v=26",
+  "js/mascot.js?v=26",
+  "js/ui.js?v=26",
+  "js/app.js?v=26",
+  "js/sw-register.js?v=26",
   "assets/icon.svg",
   "assets/icon-maskable.svg",
 ];
@@ -38,12 +39,26 @@ self.addEventListener("fetch", e => {
   // No cachear llamadas a las APIs de IA
   if (url.hostname.includes("googleapis.com") || url.hostname.includes("groq.com") || url.hostname.includes("pollinations.ai")) return;
 
-  // ignoreSearch solo en navegaciones: para los assets versionados (?v=22) la
-  // coincidencia debe ser exacta, o una entrada vieja podría servirse en lugar
-  // de la nueva y el usuario nunca recibiría un parche.
-  const esNavegacion = req.mode === "navigate";
+  // El CÓDIGO (html/js/css y navegaciones) va "red primero": si hay internet, siempre
+  // trae la última versión y actualiza la caché; sin internet, tira de la caché.
+  // El resto (fotos, iconos) va "caché primero" para que cargue rápido y offline.
+  const isCode = req.mode === "navigate" || /\.(html|js|css)$/i.test(url.pathname);
+
+  if (isCode && url.origin === location.origin) {
+    e.respondWith(
+      fetch(req).then(res => {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+        }
+        return res;
+      }).catch(() => caches.match(req, { ignoreSearch: true }))
+    );
+    return;
+  }
+
   e.respondWith(
-    caches.match(req, { ignoreSearch: esNavegacion }).then(cached => {
+    caches.match(req, { ignoreSearch: true }).then(cached => {
       const fetched = fetch(req).then(res => {
         if (res && res.status === 200 && url.origin === location.origin) {
           const copy = res.clone();

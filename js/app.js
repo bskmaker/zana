@@ -5,6 +5,7 @@ window.ZAPP = (() => {
   const S = window.ZSTORE, E = window.ZENGINE, D = window.ZDATA, U = window.ZUI, M = window.ZMASCOT;
   const app = document.getElementById("app");
   const esc = U.esc;
+  const APP_VER = "v25";  // súbelo en cada despliegue (junto con index.html/sw.js)
 
   let route = { name:"home", params:{} };
   let prevRoute = { name:"home", params:{} };
@@ -1242,7 +1243,8 @@ window.ZAPP = (() => {
           )}
         </p>
       </div>
-      <div class="center muted mt" style="font-size:12px">Zana v1.0 · 🥕</div>
+      <button class="btn ghost mt" data-forceupdate style="width:100%">🔄 ${ZL("Actualizar app","Actualitzar app","Update app")}</button>
+      <div class="center muted mt" style="font-size:12px">Zana ${APP_VER} · 🥕</div>
       <div style="height:20px"></div>
     `);
     wireBack(()=>go("plan",{id:plan.id}));
@@ -1281,6 +1283,15 @@ window.ZAPP = (() => {
       S.logIntolerance(t); U.toast("Incidencia anotada 💨","✅"); screenSettings();
     };
     app.querySelectorAll("[data-suppress]").forEach(b=> b.onclick=()=>{ S.suppressFood(b.dataset.suppress); U.toast("Alimento suprimido de tu dieta ✅"); screenSettings(); });
+    app.querySelector("[data-forceupdate]").onclick=async()=>{
+      U.toast(ZL("Buscando la última versión…","Cercant l'última versió…","Fetching latest…"),"🔄");
+      try{
+        if("caches" in window){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }
+        if("serviceWorker" in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r=>r.unregister())); }
+      }catch(e){}
+      // Recarga saltándose la caché (cache-buster) para traer index.html + scripts frescos
+      location.replace(location.pathname + "?fresh=" + Date.now());
+    };
     app.querySelector("[data-regenplan]").onclick=()=>{ S.regeneratePlan(plan.id); U.toast("Menú regenerado ✨"); };
     app.querySelector("[data-editprofile]").onclick=()=>{ ob={...plan.profile, planName:plan.name}; S.set({onboarded:false}); screenOnboarding(1); };
     app.querySelector("[data-reset]").onclick=()=>{
