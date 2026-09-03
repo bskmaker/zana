@@ -4,3 +4,6 @@ zana-artifact.html
 __pycache__/
 zana-test-*.html
 node_modules/
+
+# Progreso del re-transcriptor de Notion
+tools/.retranscribir-estado.json
