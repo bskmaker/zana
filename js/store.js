@@ -29,6 +29,59 @@ window.ZSTORE = (() => {
     },
   };
 
+  // El contenido de localStorage no es de fiar: cualquier pagina del mismo
+  // origen (en github.io todos los proyectos comparten dominio) puede
+  // escribirlo, igual que quien tenga el movil un momento. Se comprueban tipos
+  // y valores al cargar, para que un estado manipulado no rompa la app ni
+  // cuele texto arbitrario en el prompt que se envia a la IA.
+  const PROVEEDORES = ["local","gemini","groq"];
+  const TEMAS = ["light","dark","orange"];
+  const IDIOMAS = ["es","ca","en"];
+  const FORMATO_CLAVE = /^(AIza[0-9A-Za-z_\-]{20,}|AQ\.[0-9A-Za-z_\-]{20,}|gsk_[0-9A-Za-z]{20,})$/;
+  const MAX_LIBRE = 600;   // tope de los campos de texto libre
+
+  function texto(v, max){
+    return typeof v === "string" ? v.slice(0, max || MAX_LIBRE) : "";
+  }
+  function sanear(st){
+    try{
+      if (!st || typeof st !== "object") return structuredClone(DEFAULT);
+      const d = DEFAULT;
+      // Colecciones: si no tienen la forma esperada, se vuelve al valor por defecto
+      if (!Array.isArray(st.plans)) st.plans = [];
+      if (!Array.isArray(st.expenses)) st.expenses = [];
+      if (!Array.isArray(st.intolerances)) st.intolerances = [];
+      if (!Array.isArray(st.suppressed)) st.suppressed = [];
+      ["progress","pantry","frozen","products"].forEach(k=>{
+        if (!st[k] || typeof st[k] !== "object" || Array.isArray(st[k])) st[k] = {};
+      });
+
+      const s = (st.settings && typeof st.settings === "object") ? st.settings : {};
+      st.settings = {
+        ...structuredClone(d.settings),
+        ...s,
+        // Valores cerrados: cualquier cosa fuera de la lista vuelve al defecto
+        aiProvider: PROVEEDORES.includes(s.aiProvider) ? s.aiProvider : d.settings.aiProvider,
+        theme:      TEMAS.includes(s.theme)            ? s.theme      : d.settings.theme,
+        lang:       IDIOMAS.includes(s.lang)           ? s.lang       : d.settings.lang,
+        // Una clave que no tenga formato conocido no se conserva
+        aiKey:      (typeof s.aiKey === "string" && FORMATO_CLAVE.test(s.aiKey)) ? s.aiKey : "",
+        notifications: !!s.notifications,
+        shoppingFreqWeeks: [1,2,3,4].includes(+s.shoppingFreqWeeks) ? +s.shoppingFreqWeeks : 1,
+      };
+
+      // Texto libre que acaba dentro del prompt de la IA: acotado
+      st.plans.forEach(p=>{
+        if (!p || typeof p !== "object" || !p.profile || typeof p.profile !== "object") return;
+        p.profile.preferences = texto(p.profile.preferences);
+        p.profile.customDiet  = texto(p.profile.customDiet);
+        p.profile.name        = texto(p.profile.name, 60);
+        if (!Array.isArray(p.profile.dislikes)) p.profile.dislikes = [];
+      });
+      return st;
+    }catch{ return structuredClone(DEFAULT); }
+  }
+
   let state = load();
 
   function load() {
@@ -39,7 +92,7 @@ window.ZSTORE = (() => {
       // Object.assign usa [[Set]]: una clave __proto__ en el JSON cambiaria el
       // prototipo del estado. Se descarta antes de mezclar.
       if (guardado && typeof guardado === "object") delete guardado.__proto__;
-      return Object.assign(structuredClone(DEFAULT), guardado);
+      return sanear(Object.assign(structuredClone(DEFAULT), guardado));
     } catch { return structuredClone(DEFAULT); }
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }

@@ -5,7 +5,7 @@ window.ZAPP = (() => {
   const S = window.ZSTORE, E = window.ZENGINE, D = window.ZDATA, U = window.ZUI, M = window.ZMASCOT;
   const app = document.getElementById("app");
   const esc = U.esc;
-  const APP_VER = "v28";  // súbelo en cada despliegue (junto con index.html/sw.js)
+  const APP_VER = "v29";  // súbelo en cada despliegue (junto con index.html/sw.js)
 
   let route = { name:"home", params:{} };
   let prevRoute = { name:"home", params:{} };
